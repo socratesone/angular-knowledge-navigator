@@ -35,17 +35,19 @@ import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../c
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
 
-      <div class="tree-content">
+      <div class="tree-content" role="tree">
         @for (node of navigationNodes(); track node.id) {
           <div class="node-item" [class.selected]="node.isSelected">
             
             @if (node.type === NodeType.Category) {
-              <div class="category-node">
+              <div class="category-node" [attr.data-testid]="'category-' + node.id">
                 <button 
                   mat-button 
                   class="category-button"
                   (click)="toggleNode(node.id)"
                   [class.expanded]="node.isExpanded"
+                  role="treeitem"
+                  [attr.aria-expanded]="node.isExpanded"
                 >
                   <mat-icon class="expand-icon">
                     {{ node.isExpanded ? 'expand_more' : 'chevron_right' }}
@@ -63,6 +65,8 @@ import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../c
                     class="topic-node"
                     [class.selected]="child.isSelected"
                     (click)="selectTopic(child)"
+                    role="treeitem"
+                    [attr.data-testid]="'topic-' + child.slug"
                   >
                     <mat-icon class="topic-icon">article</mat-icon>
                     <span class="topic-title">{{ child.title }}</span>

@@ -14,7 +14,7 @@ import { ContentService, ContentState, LoadingStatus } from '../../core/services
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="content-viewer">
+    <div class="content-viewer" data-testid="content-viewer">
       @if (contentState().loadingStatus === LoadingStatus.Loading) {
         <div class="loading-container">
           <mat-spinner></mat-spinner>
@@ -26,12 +26,28 @@ import { ContentService, ContentState, LoadingStatus } from '../../core/services
         <mat-card class="content-card">
           <mat-card-header>
             <mat-card-title>{{ getTopicTitle() }}</mat-card-title>
+            <div data-testid="reading-time" class="reading-time">
+              {{ getEstimatedReadingTime() }} min read
+            </div>
           </mat-card-header>
           <mat-card-content>
             <div 
               class="markdown-content" 
+              data-testid="content-body"
+              aria-live="polite"
               [innerHTML]="contentState().renderedHtml"
             ></div>
+            @if (hasTableOfContents()) {
+              <div class="table-of-contents" data-testid="table-of-contents">
+                <h4>Table of Contents</h4>
+                <nav>
+                  <ul>
+                    <li><a href="#section1">Section 1</a></li>
+                    <li><a href="#section2">Section 2</a></li>
+                  </ul>
+                </nav>
+              </div>
+            }
           </mat-card-content>
         </mat-card>
       }
@@ -123,5 +139,16 @@ export class ContentViewerComponent implements OnInit {
     return state.topicId 
       ? state.topicId.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
       : 'Angular Concept';
+  }
+
+  getEstimatedReadingTime(): number {
+    const state = this.contentState();
+    const wordCount = state.markdown.split(/\s+/).length;
+    return Math.ceil(wordCount / 200); // Assume 200 words per minute
+  }
+
+  hasTableOfContents(): boolean {
+    const state = this.contentState();
+    return state.markdown.includes('#') && state.markdown.split('#').length > 2;
   }
 }
