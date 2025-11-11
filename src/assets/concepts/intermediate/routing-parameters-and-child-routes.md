@@ -1,0 +1,50 @@
+---
+title: "Routing Parameters and Child Routes"
+slug: "routing-parameters-and-child-routes"
+category: "Intermediate"
+skillLevel: "intermediate"
+difficulty: 3
+estimatedReadingTime: 25
+constitutional: true
+tags: ["intermediate", "routing"]
+prerequisites: []
+relatedTopics: []
+lastUpdated: "2025-11-11"
+contentPath: "/assets/concepts/intermediate/routing-parameters-and-child-routes.md"
+---
+
+# Routing Parameters and Child Routes
+
+## Learning Objectives
+Master Routing Parameters and Child Routes concepts for intermediate Angular development with constitutional patterns.
+
+## Overview
+Comprehensive coverage of Routing Parameters and Child Routes including modern Angular approaches, performance considerations, and real-world applications.
+
+## Key Concepts
+- Fundamental patterns and implementation strategies
+- Constitutional alignment with modern Angular practices
+- Performance optimization techniques
+- Testing and debugging approaches
+
+## Constitutional Alignment
+How Routing Parameters and Child Routes supports Angular's constitutional practices:
+- Standalone components and modern architecture
+- OnPush change detection compatibility
+- Type safety and immutable patterns
+- Performance-first implementation
+
+## Real-World Applications
+Practical use cases where Routing Parameters and Child Routes provides significant value in production applications.
+
+## Assessment Questions
+1. Key concept validation questions
+2. Implementation strategy questions  
+3. Performance and best practice questions
+4. Integration and architecture questions
+
+## Next Steps
+Related advanced topics to explore after mastering Routing Parameters and Child Routes.
+
+## Expansion Guidance for LLMs
+This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Routing Parameters and Child Routes in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
