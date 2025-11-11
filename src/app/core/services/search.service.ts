@@ -1,7 +1,16 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
-import { map, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
+import { map, debounceTime, distinctUntilChanged, startWith, switchMap, catchError } from 'rxjs/operators';
 import { ConceptTopic, SkillLevel, SearchFilters } from '../../shared/models';
+import { 
+  SearchFilter as SearchFilterInterface, 
+  SearchState, 
+  SearchResultItem, 
+  SearchResultGroup, 
+  SearchCategory, 
+  SearchMatchType,
+  SearchSuggestion
+} from '../../shared/models/search-filter.interface';
 import { NavigationService } from './navigation.service';
 
 export interface SearchFilter {
@@ -55,6 +64,39 @@ export class SearchService {
     map(([query, skillLevels]) => this.performSearch(query, skillLevels))
   );
 
+  // Enhanced search state using new interfaces
+  private readonly enhancedFilters = signal<SearchFilterInterface>({
+    query: '',
+    categories: [],
+    skillLevels: [],
+    tags: [],
+    constitutional: null,
+    difficulty: { min: 1, max: 5 },
+    hasCodeExamples: null,
+    hasBestPractices: null
+  });
+  
+  private readonly enhancedResults = signal<SearchResultItem[]>([]);
+  private readonly searchError = signal<string | null>(null);
+  private readonly searchTime = signal<number>(0);
+  readonly suggestions = signal<SearchSuggestion[]>([]);
+
+  // Enhanced computed signals
+  readonly enhancedSearchState = computed<SearchState>(() => ({
+    query: this.searchQuery(),
+    filters: this.enhancedFilters(),
+    results: this.enhancedResults(),
+    groupedResults: this.groupResultsBySkillLevel(this.enhancedResults()),
+    isLoading: this.isSearching(),
+    hasError: this.searchError() !== null,
+    errorMessage: this.searchError(),
+    totalResults: this.enhancedResults().length,
+    searchTime: this.searchTime(),
+    suggestions: this.suggestions()
+  }));
+
+  readonly groupedResults = computed(() => this.groupResultsBySkillLevel(this.enhancedResults()));
+
   constructor(private navigationService: NavigationService) {
     // Update signals when observables change
     this.debouncedSearch$.subscribe(query => {
@@ -65,6 +107,9 @@ export class SearchService {
     this.skillLevelFilterSubject.subscribe(levels => {
       this.selectedSkillLevels.set(levels);
     });
+
+    this.initializeEnhancedSearch();
+    this.loadSearchSuggestions();
   }
 
   /**
@@ -285,45 +330,312 @@ export class SearchService {
     ];
   }
 
-  /**
+    /**
    * Get search suggestions based on current query
    */
   getSuggestions(query: string): Observable<string[]> {
     if (query.length < 2) {
       return new Observable(subscriber => {
-        subscriber.next(this.getPopularSearches());
+        subscriber.next([]);
         subscriber.complete();
       });
     }
 
-    const allTopics = this.getAllTopics();
-    const suggestions = new Set<string>();
-
-    // Add matching topic titles
-    allTopics.forEach(topic => {
-      if (topic.title.toLowerCase().includes(query.toLowerCase())) {
-        suggestions.add(topic.title);
-      }
-    });
-
-    // Add popular searches that match
-    this.getPopularSearches().forEach(term => {
-      if (term.toLowerCase().includes(query.toLowerCase())) {
-        suggestions.add(term);
-      }
-    });
-
     return new Observable(subscriber => {
-      subscriber.next(Array.from(suggestions).slice(0, 8)); // Limit to 8 suggestions
-      subscriber.complete();
+      const topicSuggestions = [
+        'components', 'services', 'routing', 'forms', 'observables',
+        'dependency injection', 'standalone', 'signals', 'onpush', 'testing'
+      ];
+      const suggestions = topicSuggestions.filter((suggestion: string) =>
+        suggestion.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
+
+      setTimeout(() => {
+        subscriber.next(suggestions);
+        subscriber.complete();
+      }, 100);
     });
   }
 
   /**
-   * Track search analytics (for future enhancement)
+   * Initialize enhanced search functionality
    */
-  trackSearch(query: string, resultCount: number): void {
-    // In a real application, this would send analytics data
-    console.log('Search tracked:', { query, resultCount, timestamp: new Date() });
+  private initializeEnhancedSearch(): void {
+    // Enhanced search with debouncing
+    combineLatest([
+      this.debouncedSearch$,
+      this.skillLevelFilterSubject.pipe(startWith([]))
+    ]).pipe(
+      switchMap(([query, skillLevels]) => {
+        if (!query.trim()) {
+          return of([]);
+        }
+        return this.performEnhancedSearch(query, { 
+          ...this.enhancedFilters(), 
+          query, 
+          skillLevels 
+        });
+      }),
+      catchError(error => {
+        this.searchError.set(`Search failed: ${error.message}`);
+        return of([]);
+      })
+    ).subscribe(results => {
+      this.enhancedResults.set(results);
+      this.searchError.set(null);
+    });
+  }
+
+  /**
+   * Perform enhanced search with filtering and scoring
+   */
+  private performEnhancedSearch(query: string, filters: SearchFilterInterface): Observable<SearchResultItem[]> {
+    return this.navigationService.navigationTree$.pipe(
+      map(nodes => {
+        const startTime = performance.now();
+        const allTopics = this.extractTopicsFromNodes(nodes);
+        const results = this.filterAndScoreResults(allTopics, query, filters);
+        const endTime = performance.now();
+        
+        this.searchTime.set(Math.round(endTime - startTime));
+        return this.sortResultsByRelevance(results);
+      })
+    );
+  }
+
+  /**
+   * Extract topics from navigation nodes
+   */
+  private extractTopicsFromNodes(nodes: any[]): ConceptTopic[] {
+    const topics: ConceptTopic[] = [];
+    
+    const traverse = (nodeList: any[]) => {
+      nodeList.forEach(node => {
+        if (node.type === 'topic') {
+          const topic: ConceptTopic = {
+            id: node.id,
+            title: node.title,
+            slug: node.slug,
+            level: node.level,
+            skillLevel: node.level,
+            description: `Learn about ${node.title} in Angular development`,
+            tags: [node.level, 'angular'],
+            estimatedReadingTime: 10,
+            difficulty: this.getTopicDifficulty(node.level) as 1 | 2 | 3 | 4 | 5,
+            prerequisites: [],
+            relatedTopics: [],
+            lastUpdated: new Date(),
+            constitutional: this.isConstitutionalTopic(node.title),
+            category: node.level,
+            contentPath: `/assets/concepts/${node.id}.md`
+          };
+          topics.push(topic);
+        }
+        
+        if (node.children) {
+          traverse(node.children);
+        }
+      });
+    };
+    
+    traverse(nodes);
+    return topics;
+  }
+
+  /**
+   * Filter and score search results
+   */
+  private filterAndScoreResults(
+    topics: ConceptTopic[], 
+    query: string, 
+    filters: SearchFilterInterface
+  ): SearchResultItem[] {
+    const queryLower = query.toLowerCase();
+    const results: SearchResultItem[] = [];
+
+    topics.forEach(topic => {
+      let relevanceScore = 0;
+      let matchType = SearchMatchType.Fuzzy;
+      const highlightedContent: string[] = [];
+
+      // Title matching (highest weight)
+      if (topic.title.toLowerCase().includes(queryLower)) {
+        if (topic.title.toLowerCase() === queryLower) {
+          relevanceScore += 100;
+          matchType = SearchMatchType.Exact;
+        } else if (topic.title.toLowerCase().startsWith(queryLower)) {
+          relevanceScore += 80;
+          matchType = SearchMatchType.Partial;
+        } else {
+          relevanceScore += 60;
+          matchType = SearchMatchType.Partial;
+        }
+        highlightedContent.push(topic.title);
+      }
+
+      // Description matching
+      if (topic.description.toLowerCase().includes(queryLower)) {
+        relevanceScore += 30;
+        highlightedContent.push(topic.description);
+      }
+
+      // Tag matching
+      const matchingTags = topic.tags.filter(tag => 
+        tag.toLowerCase().includes(queryLower)
+      );
+      relevanceScore += matchingTags.length * 20;
+      highlightedContent.push(...matchingTags);
+
+      // Apply filters
+      if (!this.passesFilters(topic, filters)) {
+        return;
+      }
+
+      // Only include results with some relevance
+      if (relevanceScore > 0) {
+        const result: SearchResultItem = {
+          id: topic.id,
+          title: topic.title,
+          slug: topic.slug,
+          description: topic.description,
+          skillLevel: topic.skillLevel,
+          difficulty: topic.difficulty,
+          tags: topic.tags,
+          constitutional: topic.constitutional || false,
+          hasCodeExamples: Math.random() > 0.3, // Mock
+          hasBestPractices: topic.constitutional || Math.random() > 0.5, // Mock
+          contentPath: topic.contentPath || '',
+          relevanceScore,
+          highlightedContent,
+          matchType
+        };
+        
+        results.push(result);
+      }
+    });
+
+    return results;
+  }
+
+  /**
+   * Check if topic passes current filters
+   */
+  private passesFilters(topic: ConceptTopic, filters: SearchFilterInterface): boolean {
+    // Skill level filter
+    if (filters.skillLevels.length > 0 && !filters.skillLevels.includes(topic.skillLevel)) {
+      return false;
+    }
+
+    // Difficulty filter
+    if (topic.difficulty < filters.difficulty.min || topic.difficulty > filters.difficulty.max) {
+      return false;
+    }
+
+    // Constitutional filter
+    if (filters.constitutional !== null && (topic.constitutional || false) !== filters.constitutional) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Sort results by relevance score
+   */
+  private sortResultsByRelevance(results: SearchResultItem[]): SearchResultItem[] {
+    return results.sort((a, b) => {
+      if (b.relevanceScore !== a.relevanceScore) {
+        return b.relevanceScore - a.relevanceScore;
+      }
+      if (a.constitutional !== b.constitutional) {
+        return b.constitutional ? 1 : -1;
+      }
+      return a.title.localeCompare(b.title);
+    });
+  }
+
+  /**
+   * Group results by skill level
+   */
+  private groupResultsBySkillLevel(results: SearchResultItem[]): SearchResultGroup[] {
+    const groups = new Map<SkillLevel, SearchResultItem[]>();
+    
+    Object.values(SkillLevel).forEach(level => {
+      groups.set(level, []);
+    });
+    
+    results.forEach(result => {
+      const group = groups.get(result.skillLevel);
+      if (group) {
+        group.push(result);
+      }
+    });
+    
+    return Array.from(groups.entries()).map(([skillLevel, results]) => ({
+      skillLevel,
+      results,
+      totalCount: results.length
+    })).filter(group => group.totalCount > 0);
+  }
+
+  /**
+   * Load search suggestions
+   */
+  private loadSearchSuggestions(): void {
+    const commonSuggestions: SearchSuggestion[] = [
+      { text: 'components', type: 'category', count: 15 },
+      { text: 'services', type: 'category', count: 8 },
+      { text: 'signals', type: 'topic', count: 3 },
+      { text: 'standalone', type: 'tag', count: 12 },
+      { text: 'OnPush', type: 'tag', count: 6 }
+    ];
+    
+    this.suggestions.set(commonSuggestions);
+  }
+
+  /**
+   * Helper methods
+   */
+  private getTopicDifficulty(level: SkillLevel): number {
+    const difficultyMap = {
+      [SkillLevel.Fundamentals]: 1,
+      [SkillLevel.Intermediate]: 2,
+      [SkillLevel.Advanced]: 3,
+      [SkillLevel.Expert]: 4
+    };
+    return difficultyMap[level] || 1;
+  }
+
+  private isConstitutionalTopic(title: string): boolean {
+    const keywords = ['standalone', 'onpush', 'signals', 'constitutional'];
+    return keywords.some(keyword => title.toLowerCase().includes(keyword));
+  }
+
+  /**
+   * Enhanced search method for external use
+   */
+  searchEnhanced(query: string, filters?: Partial<SearchFilterInterface>): void {
+    const startTime = performance.now();
+    
+    this.isSearching.set(true);
+    this.searchError.set(null);
+    
+    if (filters) {
+      const updatedFilters = { ...this.enhancedFilters(), ...filters, query };
+      this.enhancedFilters.set(updatedFilters);
+    } else {
+      const updatedFilters = { ...this.enhancedFilters(), query };
+      this.enhancedFilters.set(updatedFilters);
+    }
+    
+    this.searchQuerySubject.next(query);
+  }
+
+  /**
+   * Update enhanced filters
+   */
+  updateEnhancedFilters(filters: Partial<SearchFilterInterface>): void {
+    const updatedFilters = { ...this.enhancedFilters(), ...filters };
+    this.enhancedFilters.set(updatedFilters);
   }
 }
