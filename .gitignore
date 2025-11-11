@@ -1,13 +1,33 @@
+# SpecKit and workspace
 .specify/*
 .vscode/*
+!.vscode/settings.json
 specs/*
-node_modules
-dist
-.env
+
+# Node.js and Angular
+node_modules/
+dist/
+build/
+out/
+*.log
+.env*
+coverage/
+.nyc_output/
+e2e/reports/
+cypress/videos/
+cypress/screenshots/
+
+# Angular specific
+.angular/
+.sass-cache/
+
+# IDE files
 .DS_Store
-coverage
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.idea
+Thumbs.db
+.idea/
 *.iml
+*.swp
+*.tmp
+
+# Testing
+junit.xml

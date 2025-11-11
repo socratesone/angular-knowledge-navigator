@@ -1,0 +1,369 @@
+import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
+
+export interface ConceptTopic {
+  id: string;
+  title: string;
+  level: SkillLevel;
+  category: string;
+  description: string;
+  contentPath: string;
+  prerequisites: string[];
+  relatedTopics: string[];
+  estimatedReadingTime: number;
+  lastUpdated: Date;
+  constitutional: boolean;
+}
+
+export interface NavigationNode {
+  id: string;
+  title: string;
+  type: NodeType;
+  level: SkillLevel;
+  children: NavigationNode[];
+  parent?: string;
+  isExpanded: boolean;
+  isSelected: boolean;
+  topicCount?: number;
+}
+
+export enum SkillLevel {
+  Fundamentals = 'fundamentals',
+  Intermediate = 'intermediate',
+  Advanced = 'advanced',
+  Expert = 'expert'
+}
+
+export enum NodeType {
+  Category = 'category',
+  Topic = 'topic'
+}
+
+interface LearningPathData {
+  level: string;
+  description: string;
+  topics: string[];
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class NavigationService {
+  
+  // Angular Signals for reactive state management
+  private readonly selectedTopicId = signal<string | null>(null);
+  private readonly expandedNodeIds = signal<Set<string>>(new Set(['fundamentals'])); // Start with fundamentals expanded
+  private readonly navigationHistory = signal<string[]>([]);
+  
+  // RxJS subjects for complex async operations
+  private readonly navigationTreeSubject = new BehaviorSubject<NavigationNode[]>([]);
+  private readonly topicsMapSubject = new BehaviorSubject<Map<string, ConceptTopic>>(new Map());
+
+  // Public reactive state
+  readonly selectedTopic$ = computed(() => {
+    const topicId = this.selectedTopicId();
+    const topicsMap = this.topicsMapSubject.value;
+    return topicId ? topicsMap.get(topicId) || null : null;
+  });
+
+  readonly expandedNodes$ = computed(() => this.expandedNodeIds());
+  readonly navigationHistory$ = computed(() => this.navigationHistory());
+  readonly navigationTree$ = this.navigationTreeSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    this.loadLearningPath();
+  }
+
+  /**
+   * Load and build navigation tree from learning path JSON
+   */
+  private loadLearningPath(): void {
+    this.http.get<LearningPathData[]>('/assets/data/learning-path.json').pipe(
+      map(data => this.buildNavigationTree(data)),
+      shareReplay(1)
+    ).subscribe({
+      next: ({ tree, topicsMap }) => {
+        this.navigationTreeSubject.next(tree);
+        this.topicsMapSubject.next(topicsMap);
+      },
+      error: (error) => {
+        console.error('Failed to load learning path:', error);
+        // Fallback to empty tree
+        this.navigationTreeSubject.next([]);
+      }
+    });
+  }
+
+  /**
+   * Build navigation tree structure from learning path data
+   */
+  private buildNavigationTree(data: LearningPathData[]): { 
+    tree: NavigationNode[], 
+    topicsMap: Map<string, ConceptTopic> 
+  } {
+    const tree: NavigationNode[] = [];
+    const topicsMap = new Map<string, ConceptTopic>();
+
+    data.forEach(levelData => {
+      const skillLevel = levelData.level.toLowerCase() as SkillLevel;
+      
+      // Create category node for skill level
+      const categoryNode: NavigationNode = {
+        id: skillLevel,
+        title: levelData.level,
+        type: NodeType.Category,
+        level: skillLevel,
+        children: [],
+        isExpanded: skillLevel === SkillLevel.Fundamentals, // Start with fundamentals expanded
+        isSelected: false,
+        topicCount: levelData.topics.length
+      };
+
+      // Create topic nodes
+      levelData.topics.forEach((topicTitle, index) => {
+        const topicId = `${skillLevel}/${this.slugify(topicTitle)}`;
+        
+        // Create topic node
+        const topicNode: NavigationNode = {
+          id: topicId,
+          title: topicTitle,
+          type: NodeType.Topic,
+          level: skillLevel,
+          children: [],
+          parent: skillLevel,
+          isExpanded: false,
+          isSelected: false
+        };
+
+        // Create concept topic data
+        const conceptTopic: ConceptTopic = {
+          id: topicId,
+          title: topicTitle,
+          level: skillLevel,
+          category: levelData.level,
+          description: `Learn about ${topicTitle} in Angular development`,
+          contentPath: `/assets/concepts/${topicId}.md`,
+          prerequisites: index > 0 ? [`${skillLevel}/${this.slugify(levelData.topics[index - 1])}`] : [],
+          relatedTopics: [],
+          estimatedReadingTime: 10, // Default 10 minutes
+          lastUpdated: new Date(),
+          constitutional: topicTitle.toLowerCase().includes('standalone') || 
+                         topicTitle.toLowerCase().includes('onpush') ||
+                         topicTitle.toLowerCase().includes('signals')
+        };
+
+        categoryNode.children.push(topicNode);
+        topicsMap.set(topicId, conceptTopic);
+      });
+
+      tree.push(categoryNode);
+    });
+
+    return { tree, topicsMap };
+  }
+
+  /**
+   * Convert title to URL-friendly slug
+   */
+  private slugify(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+  }
+
+  /**
+   * Select a topic and update navigation state
+   */
+  selectTopic(topicId: string): void {
+    const currentHistory = this.navigationHistory();
+    
+    // Add to history if different from current selection
+    if (this.selectedTopicId() !== topicId) {
+      this.navigationHistory.set([...currentHistory, topicId]);
+    }
+    
+    this.selectedTopicId.set(topicId);
+    this.updateTreeSelection(topicId);
+  }
+
+  /**
+   * Update tree selection state
+   */
+  private updateTreeSelection(selectedId: string): void {
+    const tree = this.navigationTreeSubject.value;
+    const updatedTree = this.mapTreeNodes(tree, node => ({
+      ...node,
+      isSelected: node.id === selectedId
+    }));
+    
+    this.navigationTreeSubject.next(updatedTree);
+  }
+
+  /**
+   * Expand or collapse a navigation node
+   */
+  toggleNode(nodeId: string): void {
+    const expanded = this.expandedNodeIds();
+    const newExpanded = new Set(expanded);
+    
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    
+    this.expandedNodeIds.set(newExpanded);
+    this.updateTreeExpansion();
+  }
+
+  /**
+   * Update tree expansion state
+   */
+  private updateTreeExpansion(): void {
+    const tree = this.navigationTreeSubject.value;
+    const expanded = this.expandedNodeIds();
+    
+    const updatedTree = this.mapTreeNodes(tree, node => ({
+      ...node,
+      isExpanded: expanded.has(node.id)
+    }));
+    
+    this.navigationTreeSubject.next(updatedTree);
+  }
+
+  /**
+   * Map over tree nodes recursively
+   */
+  private mapTreeNodes(
+    nodes: NavigationNode[], 
+    mapper: (node: NavigationNode) => NavigationNode
+  ): NavigationNode[] {
+    return nodes.map(node => {
+      const mappedNode = mapper(node);
+      return {
+        ...mappedNode,
+        children: this.mapTreeNodes(node.children, mapper)
+      };
+    });
+  }
+
+  /**
+   * Get topic by ID
+   */
+  getTopicById(id: string): ConceptTopic | null {
+    return this.topicsMapSubject.value.get(id) || null;
+  }
+
+  /**
+   * Get topics by skill level
+   */
+  getTopicsByLevel(level: SkillLevel): ConceptTopic[] {
+    const allTopics = Array.from(this.topicsMapSubject.value.values());
+    return allTopics.filter(topic => topic.level === level);
+  }
+
+  /**
+   * Navigate to next topic in learning path
+   */
+  navigateToNext(): ConceptTopic | null {
+    const currentTopic = this.selectedTopic$();
+    if (!currentTopic) return null;
+
+    const topicsInLevel = this.getTopicsByLevel(currentTopic.level);
+    const currentIndex = topicsInLevel.findIndex(t => t.id === currentTopic.id);
+    
+    if (currentIndex < topicsInLevel.length - 1) {
+      // Next topic in same level
+      const nextTopic = topicsInLevel[currentIndex + 1];
+      this.selectTopic(nextTopic.id);
+      return nextTopic;
+    } else {
+      // Move to next level
+      const nextLevel = this.getNextLevel(currentTopic.level);
+      if (nextLevel) {
+        const nextLevelTopics = this.getTopicsByLevel(nextLevel);
+        if (nextLevelTopics.length > 0) {
+          const firstTopic = nextLevelTopics[0];
+          this.selectTopic(firstTopic.id);
+          return firstTopic;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Navigate to previous topic
+   */
+  navigateToPrevious(): ConceptTopic | null {
+    const history = this.navigationHistory();
+    if (history.length > 1) {
+      const previousId = history[history.length - 2];
+      const previousTopic = this.getTopicById(previousId);
+      
+      if (previousTopic) {
+        // Remove current from history and go back
+        this.navigationHistory.set(history.slice(0, -1));
+        this.selectedTopicId.set(previousId);
+        this.updateTreeSelection(previousId);
+        return previousTopic;
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Get next skill level in progression
+   */
+  private getNextLevel(currentLevel: SkillLevel): SkillLevel | null {
+    const levels = [
+      SkillLevel.Fundamentals,
+      SkillLevel.Intermediate,
+      SkillLevel.Advanced,
+      SkillLevel.Expert
+    ];
+    
+    const currentIndex = levels.indexOf(currentLevel);
+    return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+  }
+
+  /**
+   * Expand all nodes
+   */
+  expandAll(): void {
+    const tree = this.navigationTreeSubject.value;
+    const allNodeIds = this.collectAllNodeIds(tree);
+    this.expandedNodeIds.set(new Set(allNodeIds));
+    this.updateTreeExpansion();
+  }
+
+  /**
+   * Collapse all nodes except fundamentals
+   */
+  collapseAll(): void {
+    this.expandedNodeIds.set(new Set(['fundamentals']));
+    this.updateTreeExpansion();
+  }
+
+  /**
+   * Collect all node IDs recursively
+   */
+  private collectAllNodeIds(nodes: NavigationNode[]): string[] {
+    const ids: string[] = [];
+    
+    nodes.forEach(node => {
+      ids.push(node.id);
+      if (node.children.length > 0) {
+        ids.push(...this.collectAllNodeIds(node.children));
+      }
+    });
+    
+    return ids;
+  }
+}

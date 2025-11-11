@@ -1,0 +1,86 @@
+[
+  {
+    "level": "Fundamentals",
+    "description": "Essential Angular concepts for junior developers and beginners.",
+    "topics": [
+      "Introduction to Angular",
+      "Angular Architecture Overview (Modules, Components, Templates)",
+      "Angular CLI and Project Setup",
+      "TypeScript Essentials for Angular",
+      "Components and Templates",
+      "Interpolation and Property Binding",
+      "Event Binding and Two-Way Data Binding",
+      "Directives (ngIf, ngFor, ngSwitch)",
+      "Pipes and Data Transformation",
+      "Dependency Injection Basics",
+      "Services and Providers",
+      "Routing and Navigation Basics",
+      "Working with Forms (Template-Driven Forms)",
+      "Handling User Input and Validation",
+      "Introduction to Observables and RxJS"
+    ]
+  },
+  {
+    "level": "Intermediate",
+    "description": "Concepts and patterns needed for independent feature development and maintainable architecture.",
+    "topics": [
+      "Reactive Forms and FormBuilder",
+      "Custom Directives and Pipes",
+      "Component Communication (Input, Output, ViewChild, Service-based)",
+      "Change Detection Strategy (Default vs OnPush)",
+      "Lifecycle Hooks (ngOnInit, ngOnDestroy, etc.)",
+      "Routing Parameters and Child Routes",
+      "Lazy Loading Feature Modules",
+      "HTTP Client and Interceptors",
+      "Environment Configuration and Environments.ts",
+      "Error Handling and GlobalErrorHandler",
+      "Content Projection and ng-content",
+      "Template Reference Variables",
+      "ViewEncapsulation and Style Isolation",
+      "Angular Material and UI Components",
+      "Using RxJS Operators (map, filter, switchMap, etc.)"
+    ]
+  },
+  {
+    "level": "Advanced",
+    "description": "Higher-order Angular features focusing on scalability, performance, and architecture patterns.",
+    "topics": [
+      "Standalone Components and Feature Modules Integration",
+      "Advanced Dependency Injection Scopes",
+      "Custom Decorators and Dynamic Components",
+      "Reactive State Management (RxJS, ComponentStore, NgRx Introduction)",
+      "Smart vs Presentational Components Pattern",
+      "Optimizing Change Detection and Performance",
+      "Asynchronous Data Streams and AsyncPipe",
+      "Advanced Routing (Guards, Resolvers, Preloading Strategies)",
+      "Dynamic Form Generation and Configuration-driven UIs",
+      "Custom Structural Directives",
+      "Reusable Component Libraries and Shared Modules",
+      "Unit Testing with Jest and Angular Testing Library",
+      "End-to-End Testing with Cypress or Playwright",
+      "Accessibility (a11y) and ARIA Roles in Angular",
+      "Internationalization (i18n) Setup and Usage"
+    ]
+  },
+  {
+    "level": "Expert",
+    "description": "Senior-level concepts focusing on architectural governance, performance tuning, and large-scale application design.",
+    "topics": [
+      "Application Architecture and Module Boundaries",
+      "Monorepo and Workspace Management (Nx, Angular CLI Workspaces)",
+      "Advanced NgRx (Selectors, Effects, Entity Management)",
+      "Signals and Modern Reactivity Model (Angular 17+)",
+      "SSR and Pre-rendering with Angular Universal",
+      "Progressive Web Apps (PWAs) in Angular",
+      "Security Best Practices (XSS, Sanitization, CSP)",
+      "Custom Build Configuration and Webpack Adjustments",
+      "Performance Profiling and Optimization (Change Detection Profiling, Bundle Size Reduction)",
+      "Design Systems and Theming Architecture",
+      "Integration Testing and Continuous Integration Pipelines",
+      "Error Monitoring and Observability (Sentry, OpenTelemetry)",
+      "Microfrontend Architecture and Module Federation",
+      "Code Quality Automation and Linting Enforcement",
+      "Defining and Enforcing Architectural Conventions (Constitutional Compliance)"
+    ]
+  }
+]

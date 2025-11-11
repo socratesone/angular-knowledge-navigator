@@ -1,0 +1,19 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$angular-knowledge-navigator-primary: mat.define-palette(mat.$indigo-palette);
+$angular-knowledge-navigator-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+$angular-knowledge-navigator-warn: mat.define-palette(mat.$red-palette);
+
+$angular-knowledge-navigator-theme: mat.define-light-theme((
+  color: (
+    primary: $angular-knowledge-navigator-primary,
+    accent: $angular-knowledge-navigator-accent,
+    warn: $angular-knowledge-navigator-warn,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+@include mat.all-component-themes($angular-knowledge-navigator-theme);

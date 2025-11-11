@@ -1,0 +1,73 @@
+.app-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  
+  .spacer {
+    flex: 1 1 auto;
+  }
+  
+  .menu-toggle {
+    @media (min-width: 768px) {
+      display: none; // Hide on desktop
+    }
+  }
+}
+
+.app-container {
+  flex: 1;
+  margin-top: 64px; // Account for fixed toolbar
+  
+  .app-sidenav {
+    width: 300px;
+    border-right: 1px solid #e0e0e0;
+    
+    .sidenav-content {
+      padding: 1rem;
+      height: 100%;
+      
+      h3 {
+        margin: 0 0 1rem 0;
+        color: #1976d2;
+        font-weight: 500;
+      }
+      
+      .placeholder {
+        color: #666;
+        font-style: italic;
+        margin: 1rem 0;
+      }
+    }
+    
+    @media (max-width: 767px) {
+      width: 280px;
+    }
+  }
+  
+  .app-content {
+    .content-area {
+      padding: 1rem;
+      height: 100%;
+      overflow-y: auto;
+      
+      @media (max-width: 767px) {
+        padding: 0.5rem;
+      }
+    }
+  }
+}
+
+/* Responsive behavior for mobile devices */
+@media (max-width: 767px) {
+  .app-header .app-title {
+    font-size: 1.1rem;
+  }
+}
