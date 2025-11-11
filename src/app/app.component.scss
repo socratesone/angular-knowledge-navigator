@@ -1,0 +1,21 @@
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  header {
+    background-color: #1976d2;
+    color: white;
+    padding: 1rem;
+    
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+  }
+
+  main {
+    flex: 1;
+    padding: 1rem;
+  }
+}

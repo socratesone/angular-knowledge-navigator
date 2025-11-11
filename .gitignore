@@ -1,0 +1,33 @@
+# SpecKit and workspace
+.specify/*
+.vscode/*
+!.vscode/settings.json
+specs/*
+
+# Node.js and Angular
+node_modules/
+dist/
+build/
+out/
+*.log
+.env*
+coverage/
+.nyc_output/
+e2e/reports/
+cypress/videos/
+cypress/screenshots/
+
+# Angular specific
+.angular/
+.sass-cache/
+
+# IDE files
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.swp
+*.tmp
+
+# Testing
+junit.xml
