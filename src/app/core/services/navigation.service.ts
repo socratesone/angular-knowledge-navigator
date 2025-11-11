@@ -42,6 +42,7 @@ export class NavigationService {
 
   constructor(private http: HttpClient) {
     this.loadLearningPath();
+    this.initializeProgressTracking();
   }
 
   /**
@@ -115,6 +116,7 @@ export class NavigationService {
           title: topicTitle,
           slug: this.slugify(topicTitle),
           level: skillLevel,
+          skillLevel: skillLevel, // Add required alias
           description: `Learn about ${topicTitle} in Angular development`,
           tags: [skillLevel, 'angular'],
           difficulty: Math.min(5, Math.max(1, data.indexOf(levelData) + 1)) as 1 | 2 | 3 | 4 | 5,
@@ -341,5 +343,182 @@ export class NavigationService {
     });
     
     return ids;
+  }
+
+  /**
+   * Get prerequisites for a specific topic
+   */
+  getPrerequisites(topicId: string): string[] {
+    const prerequisiteMap: { [key: string]: string[] } = {
+      // Intermediate topics require fundamentals
+      'intermediate/angular-signals': ['fundamentals/components-and-templates', 'fundamentals/data-binding'],
+      'intermediate/component-communication': ['fundamentals/components-and-templates'],
+      
+      // Advanced topics require intermediate knowledge
+      'advanced/change-detection-strategies': ['intermediate/angular-signals', 'fundamentals/components-and-templates'],
+      'advanced/lazy-loading': ['fundamentals/introduction-to-angular', 'intermediate/component-communication'],
+      
+      // Expert topics require advanced knowledge
+      'expert/angular-constitution-and-best-practices': ['advanced/change-detection-strategies', 'advanced/lazy-loading']
+    };
+
+    return prerequisiteMap[topicId] || [];
+  }
+
+  /**
+   * Check if user has completed prerequisites for a topic
+   */
+  hasCompletedPrerequisites(topicId: string): boolean {
+    const prerequisites = this.getPrerequisites(topicId);
+    const completedTopics = this.getCompletedTopics();
+    
+    return prerequisites.every(prereq => completedTopics.includes(prereq));
+  }
+
+  /**
+   * Get completed topics (based on visit history for now)
+   */
+  getCompletedTopics(): string[] {
+    // In a real app, this would track actual completion status
+    // For now, we'll use navigation history as a proxy
+    return this.navigationHistory();
+  }
+
+  /**
+   * Mark a topic as visited/completed
+   */
+  markTopicVisited(topicId: string): void {
+    const currentHistory = this.navigationHistory();
+    if (!currentHistory.includes(topicId)) {
+      this.navigationHistory.set([...currentHistory, topicId]);
+      this.saveProgressToStorage();
+    }
+  }
+
+  /**
+   * Get recommended next topics based on current progress
+   */
+  getRecommendedNextTopics(): string[] {
+    const completed = this.getCompletedTopics();
+    const allTopics = this.getAllTopicIds();
+    
+    // Find topics where prerequisites are met but topic not yet completed
+    return allTopics.filter(topicId => 
+      !completed.includes(topicId) && 
+      this.hasCompletedPrerequisites(topicId)
+    ).slice(0, 3); // Limit to 3 recommendations
+  }
+
+  /**
+   * Get all topic IDs from the navigation tree
+   */
+  getAllTopicIds(): string[] {
+    const topicsMap = this.topicsMapSubject.value;
+    return Array.from(topicsMap.keys());
+  }
+
+  /**
+   * Calculate learning progress percentage
+   */
+  getLearningProgress(): { completed: number; total: number; percentage: number } {
+    const completed = this.getCompletedTopics().length;
+    const total = this.getAllTopicIds().length;
+    
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  }
+
+  /**
+   * Get skill level progress
+   */
+  getSkillLevelProgress(): { [key in SkillLevel]: { completed: number; total: number } } {
+    const completed = this.getCompletedTopics();
+    const topicsMap = this.topicsMapSubject.value;
+    
+    const progress = {
+      [SkillLevel.Fundamentals]: { completed: 0, total: 0 },
+      [SkillLevel.Intermediate]: { completed: 0, total: 0 },
+      [SkillLevel.Advanced]: { completed: 0, total: 0 },
+      [SkillLevel.Expert]: { completed: 0, total: 0 }
+    };
+
+    topicsMap.forEach((topic, topicId) => {
+      const level = topic.skillLevel;
+      if (progress[level]) {
+        progress[level].total++;
+        
+        if (completed.includes(topicId)) {
+          progress[level].completed++;
+        }
+      }
+    });
+
+    return progress;
+  }
+
+  /**
+   * Check if topic is available (prerequisites met)
+   */
+  isTopicAvailable(topicId: string): boolean {
+    const level = this.getTopicLevel(topicId);
+    
+    // Fundamentals are always available
+    if (level === SkillLevel.Fundamentals) {
+      return true;
+    }
+    
+    return this.hasCompletedPrerequisites(topicId);
+  }
+
+  /**
+   * Get topic skill level from topic ID
+   */
+  private getTopicLevel(topicId: string): SkillLevel {
+    const topicsMap = this.topicsMapSubject.value;
+    const topic = topicsMap.get(topicId);
+    return topic?.skillLevel || SkillLevel.Fundamentals;
+  }
+
+  /**
+   * Save progress to localStorage
+   */
+  private saveProgressToStorage(): void {
+    const progress = {
+      completedTopics: this.getCompletedTopics(),
+      lastVisited: new Date().toISOString()
+    };
+    
+    try {
+      localStorage.setItem('angular-knowledge-navigator-progress', JSON.stringify(progress));
+    } catch (error) {
+      console.warn('Failed to save progress to localStorage:', error);
+    }
+  }
+
+  /**
+   * Load progress from localStorage
+   */
+  private loadProgressFromStorage(): void {
+    try {
+      const stored = localStorage.getItem('angular-knowledge-navigator-progress');
+      if (stored) {
+        const progress = JSON.parse(stored);
+        if (progress.completedTopics) {
+          this.navigationHistory.set(progress.completedTopics);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load progress from localStorage:', error);
+    }
+  }
+
+  /**
+   * Initialize progress tracking
+   */
+  initializeProgressTracking(): void {
+    this.loadProgressFromStorage();
   }
 }

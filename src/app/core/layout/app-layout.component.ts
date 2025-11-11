@@ -20,7 +20,7 @@ import { NavigationTreeComponent } from '../../navigation/components/navigation-
     NavigationTreeComponent
   ],
   template: `
-    <div class="app-layout">
+    <div class="app-layout" data-testid="app-layout">
       <mat-toolbar color="primary" class="app-header">
         <button mat-icon-button (click)="toggleSidenav()" class="menu-toggle">
           <mat-icon>menu</mat-icon>
@@ -41,7 +41,7 @@ import { NavigationTreeComponent } from '../../navigation/components/navigation-
           [fixedInViewport]="true"
         >
           <div class="sidenav-content">
-            <app-navigation-tree></app-navigation-tree>
+            <app-navigation-tree data-testid="navigation-tree"></app-navigation-tree>
           </div>
         </mat-sidenav>
 
