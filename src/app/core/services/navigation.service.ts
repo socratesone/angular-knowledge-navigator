@@ -2,50 +2,18 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
+import { 
+  ConceptTopic, 
+  NavigationNode, 
+  SkillLevel, 
+  NodeType, 
+  LearningPath,
+  LearningPathData 
+} from '../../shared/models';
 
-export interface ConceptTopic {
-  id: string;
-  title: string;
-  level: SkillLevel;
-  category: string;
-  description: string;
-  contentPath: string;
-  prerequisites: string[];
-  relatedTopics: string[];
-  estimatedReadingTime: number;
-  lastUpdated: Date;
-  constitutional: boolean;
-}
-
-export interface NavigationNode {
-  id: string;
-  title: string;
-  type: NodeType;
-  level: SkillLevel;
-  children: NavigationNode[];
-  parent?: string;
-  isExpanded: boolean;
-  isSelected: boolean;
-  topicCount?: number;
-}
-
-export enum SkillLevel {
-  Fundamentals = 'fundamentals',
-  Intermediate = 'intermediate',
-  Advanced = 'advanced',
-  Expert = 'expert'
-}
-
-export enum NodeType {
-  Category = 'category',
-  Topic = 'topic'
-}
-
-interface LearningPathData {
-  level: string;
-  description: string;
-  topics: string[];
-}
+// Re-export for backward compatibility (need runtime values for enums)
+export { SkillLevel, NodeType } from '../../shared/models';
+export type { ConceptTopic, NavigationNode, LearningPath } from '../../shared/models';
 
 @Injectable({
   providedIn: 'root'
@@ -113,9 +81,11 @@ export class NavigationService {
       const categoryNode: NavigationNode = {
         id: skillLevel,
         title: levelData.level,
+        slug: skillLevel,
         type: NodeType.Category,
         level: skillLevel,
         children: [],
+        order: data.indexOf(levelData),
         isExpanded: skillLevel === SkillLevel.Fundamentals, // Start with fundamentals expanded
         isSelected: false,
         topicCount: levelData.topics.length
@@ -129,10 +99,12 @@ export class NavigationService {
         const topicNode: NavigationNode = {
           id: topicId,
           title: topicTitle,
+          slug: this.slugify(topicTitle),
           type: NodeType.Topic,
           level: skillLevel,
           children: [],
           parent: skillLevel,
+          order: index,
           isExpanded: false,
           isSelected: false
         };
@@ -141,20 +113,24 @@ export class NavigationService {
         const conceptTopic: ConceptTopic = {
           id: topicId,
           title: topicTitle,
+          slug: this.slugify(topicTitle),
           level: skillLevel,
-          category: levelData.level,
           description: `Learn about ${topicTitle} in Angular development`,
-          contentPath: `/assets/concepts/${topicId}.md`,
+          tags: [skillLevel, 'angular'],
+          difficulty: Math.min(5, Math.max(1, data.indexOf(levelData) + 1)) as 1 | 2 | 3 | 4 | 5,
           prerequisites: index > 0 ? [`${skillLevel}/${this.slugify(levelData.topics[index - 1])}`] : [],
           relatedTopics: [],
           estimatedReadingTime: 10, // Default 10 minutes
           lastUpdated: new Date(),
+          // Additional properties for backward compatibility
+          category: levelData.level,
+          contentPath: `/assets/concepts/${topicId}.md`,
           constitutional: topicTitle.toLowerCase().includes('standalone') || 
                          topicTitle.toLowerCase().includes('onpush') ||
                          topicTitle.toLowerCase().includes('signals')
         };
 
-        categoryNode.children.push(topicNode);
+        categoryNode.children!.push(topicNode);
         topicsMap.set(topicId, conceptTopic);
       });
 
@@ -246,7 +222,7 @@ export class NavigationService {
       const mappedNode = mapper(node);
       return {
         ...mappedNode,
-        children: this.mapTreeNodes(node.children, mapper)
+        children: node.children ? this.mapTreeNodes(node.children, mapper) : []
       };
     });
   }
@@ -359,7 +335,7 @@ export class NavigationService {
     
     nodes.forEach(node => {
       ids.push(node.id);
-      if (node.children.length > 0) {
+      if (node.children && node.children.length > 0) {
         ids.push(...this.collectAllNodeIds(node.children));
       }
     });

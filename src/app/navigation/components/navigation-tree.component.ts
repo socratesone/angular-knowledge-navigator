@@ -56,7 +56,7 @@ import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../c
               </div>
             }
 
-            @if (node.type === NodeType.Category && node.isExpanded && node.children.length > 0) {
+            @if (node.type === NodeType.Category && node.isExpanded && node.children && node.children.length > 0) {
               <div class="children-container">
                 @for (child of node.children; track child.id) {
                   <div 

@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
 import { marked } from 'marked';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import * as Prism from 'prismjs';
+
+// Import specific language support
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-scss';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-markdown';
 
 export interface ProcessedContent {
   html: SafeHtml;
@@ -28,6 +38,7 @@ export class MarkdownProcessorService {
   
   constructor(private sanitizer: DomSanitizer) {
     this.configureMarked();
+    this.loadPrismTheme();
   }
 
   /**
@@ -47,7 +58,7 @@ export class MarkdownProcessorService {
       return `<h${level} id="${id}">${text}</h${level}>`;
     };
 
-    // Override code renderer to collect code blocks
+    // Override code renderer to collect code blocks and apply Prism.js highlighting
     renderer.code = (code: string, language: string | undefined): string => {
       const lang = language || 'text';
       codeBlocks.push({
@@ -56,7 +67,20 @@ export class MarkdownProcessorService {
         lineCount: code.split('\n').length
       });
       
-      return `<pre><code class="language-${lang}">${this.escapeHtml(code)}</code></pre>`;
+      // Use Prism.js for syntax highlighting
+      let highlightedCode: string;
+      try {
+        if (lang && Prism.languages[lang]) {
+          highlightedCode = Prism.highlight(code, Prism.languages[lang], lang);
+        } else {
+          highlightedCode = this.escapeHtml(code);
+        }
+      } catch (error) {
+        console.warn(`Prism.js highlighting failed for language: ${lang}`, error);
+        highlightedCode = this.escapeHtml(code);
+      }
+      
+      return `<pre class="language-${lang}"><code class="language-${lang}">${highlightedCode}</code></pre>`;
     };
 
     marked.setOptions({
@@ -174,5 +198,46 @@ export class MarkdownProcessorService {
     tocHtml += '</ul></nav>';
     
     return this.sanitizer.bypassSecurityTrustHtml(tocHtml);
+  }
+
+  /**
+   * Load Prism.js CSS theme for syntax highlighting
+   */
+  private loadPrismTheme(): void {
+    // Check if theme is already loaded
+    if (document.querySelector('link[data-prism-theme]')) {
+      return;
+    }
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css';
+    link.setAttribute('data-prism-theme', 'tomorrow');
+    document.head.appendChild(link);
+  }
+
+  /**
+   * Get supported languages for syntax highlighting
+   */
+  getSupportedLanguages(): string[] {
+    return [
+      'typescript',
+      'javascript', 
+      'html',
+      'css',
+      'scss',
+      'json',
+      'bash',
+      'markdown',
+      'text'
+    ];
+  }
+
+  /**
+   * Check if a language is supported for highlighting
+   */
+  isLanguageSupported(language: string): boolean {
+    return this.getSupportedLanguages().includes(language) || 
+           (language in Prism.languages);
   }
 }

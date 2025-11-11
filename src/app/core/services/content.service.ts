@@ -4,29 +4,11 @@ import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
 import { marked } from 'marked';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ContentState, LoadingStatus, ContentError } from '../../shared/models';
 
-export interface ContentState {
-  topicId: string;
-  markdown: string;
-  renderedHtml: SafeHtml;
-  loadingStatus: LoadingStatus;
-  error?: ContentError;
-  lastLoaded: Date;
-  scrollPosition: number;
-}
-
-export enum LoadingStatus {
-  Idle = 'idle',
-  Loading = 'loading',
-  Loaded = 'loaded',
-  Error = 'error'
-}
-
-export interface ContentError {
-  type: 'not-found' | 'parse-error' | 'validation-error';
-  message: string;
-  details?: string;
-}
+// Re-export for backward compatibility (need runtime values for enums)
+export { LoadingStatus } from '../../shared/models';
+export type { ContentState, ContentError } from '../../shared/models';
 
 @Injectable({
   providedIn: 'root'

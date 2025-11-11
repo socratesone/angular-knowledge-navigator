@@ -1,7 +1,8 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
-import { ConceptTopic, SkillLevel, NavigationService } from './navigation.service';
+import { ConceptTopic, SkillLevel, SearchFilters } from '../../shared/models';
+import { NavigationService } from './navigation.service';
 
 export interface SearchFilter {
   query: string;
