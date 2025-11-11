@@ -148,6 +148,9 @@ npm run build
 npm run e2e
 
 ```
+
+## Directory structure:
+```
 src/
  ├── app/
  │   ├── navigation/

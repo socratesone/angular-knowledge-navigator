@@ -10,7 +10,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { ContentService } from '../../core/services/content.service';
 import { NavigationService } from '../../core/services/navigation.service';
+import { SearchService } from '../../core/services/search.service';
 import { ContentState, LoadingStatus, BestPractice, Caveat, CodeExample } from '../../shared/models';
+import { HighlightDirective, AdvancedHighlightDirective } from '../../shared/directives';
 import { CodeHighlighterComponent } from '../../shared/components/code-highlighter.component';
 import { BestPracticesComponent } from './best-practices.component';
 import { CaveatsComponent } from './caveats.component';
@@ -28,6 +30,8 @@ import { CaveatsComponent } from './caveats.component';
     MatIconModule,
     MatButtonModule,
     MatExpansionModule,
+    HighlightDirective,
+    AdvancedHighlightDirective,
     CodeHighlighterComponent,
     BestPracticesComponent,
     CaveatsComponent

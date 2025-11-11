@@ -5,3 +5,4 @@ export * from './search.interface';
 export * from './common.interface';
 export * from './code-example.interface';
 export * from './best-practice.interface';
+export * from './search-filter.interface';
