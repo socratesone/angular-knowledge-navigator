@@ -3,6 +3,7 @@ export interface ConceptTopic {
   title: string;
   slug: string;
   level: SkillLevel;
+  skillLevel: SkillLevel; // Alias for compatibility
   description: string;
   tags: string[];
   estimatedReadingTime: number;
