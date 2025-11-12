@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, signal } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { CodeExample, CodeSnippet } from '../../shared/models';
+import { ClipboardService } from '../../core/services/clipboard.service';
 
 @Component({
   selector: 'app-code-highlighter',
@@ -158,6 +159,7 @@ export class CodeHighlighterComponent implements OnInit, AfterViewInit, OnDestro
   readonly highlighted = signal<boolean>(false);
 
   private copyTimeout?: number;
+  private clipboardService = inject(ClipboardService);
 
   ngOnInit(): void {
     if (this.codeExample) {
@@ -178,19 +180,31 @@ export class CodeHighlighterComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   async copyCode(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(this.example().code);
-      this.copied.set(true);
-      
-      if (this.copyTimeout) {
-        clearTimeout(this.copyTimeout);
+    const example = this.example();
+    this.copied.set(true);
+    
+    const result = await this.clipboardService.copyCodeBlock(
+      example.code,
+      example.language,
+      undefined, // fileName not available in CodeExample interface
+      {
+        successMessage: `Code copied!${example.title ? ` (${example.title})` : ''}`,
+        errorMessage: 'Failed to copy code',
+        duration: 2000
       }
-      
-      this.copyTimeout = window.setTimeout(() => {
-        this.copied.set(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to copy code:', error);
+    );
+    
+    // Reset copied state
+    if (this.copyTimeout) {
+      clearTimeout(this.copyTimeout);
+    }
+    
+    this.copyTimeout = window.setTimeout(() => {
+      this.copied.set(false);
+    }, result.success ? 2000 : 3000);
+    
+    if (!result.success) {
+      console.warn('Copy failed:', result.error, 'Method:', result.method);
     }
   }
 

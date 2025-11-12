@@ -1,0 +1,61 @@
+/* Global styles for clipboard notifications */
+
+/* Success snackbar styling */
+.success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+  
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+  
+  .mat-mdc-button {
+    color: white !important;
+  }
+}
+
+/* Error snackbar styling */  
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+  
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+  
+  .mat-mdc-button {
+    color: white !important;
+  }
+}
+
+/* Mobile responsive snackbar positioning */
+@media (max-width: 767.98px) {
+  .mat-mdc-snack-bar-container {
+    margin: 8px !important;
+    max-width: calc(100vw - 16px) !important;
+    min-width: calc(100vw - 16px) !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .success-snackbar {
+    background-color: #000000 !important;
+    color: #00ff00 !important;
+    border: 2px solid #00ff00 !important;
+  }
+  
+  .error-snackbar {
+    background-color: #000000 !important;  
+    color: #ff0000 !important;
+    border: 2px solid #ff0000 !important;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .mat-mdc-snack-bar-container {
+    animation: none !important;
+    transition: none !important;
+  }
+}

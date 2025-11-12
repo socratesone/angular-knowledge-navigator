@@ -44,9 +44,19 @@ export interface ContentHeading {
 }
 
 export interface CodeBlock {
+  id: string;
   language: string;
+  detectedLanguage?: string;
   code: string;
   lineCount: number;
+  startLine?: number;
+  fileName?: string;
+  title?: string;
+  category?: string;
+  tags?: string[];
+  isCollapsible?: boolean;
+  showLineNumbers?: boolean;
+  highlightLines?: number[];
 }
 
 @Injectable({
@@ -82,26 +92,48 @@ export class MarkdownProcessorService {
     // Override code renderer to collect code blocks and apply Prism.js highlighting
     renderer.code = (code: string, language: string | undefined): string => {
       const lang = language || 'text';
+      const detectedLang = this.detectLanguage(code, lang);
+      const codeId = this.generateCodeBlockId(codeBlocks.length);
+      
+      // Parse code block metadata from comments or attributes
+      const metadata = this.parseCodeBlockMetadata(code, lang);
+      
       codeBlocks.push({
+        id: codeId,
         language: lang,
+        detectedLanguage: detectedLang,
         code: code,
-        lineCount: code.split('\n').length
+        lineCount: code.split('\n').length,
+        showLineNumbers: metadata.showLineNumbers ?? (code.split('\n').length > 10),
+        ...metadata
       });
       
-      // Use Prism.js for syntax highlighting
+      // Use Prism.js for enhanced syntax highlighting
       let highlightedCode: string;
+      const targetLang = detectedLang || lang;
+      
       try {
-        if (lang && Prism.languages[lang]) {
-          highlightedCode = Prism.highlight(code, Prism.languages[lang], lang);
+        if (targetLang && Prism.languages[targetLang]) {
+          highlightedCode = Prism.highlight(code, Prism.languages[targetLang], targetLang);
         } else {
           highlightedCode = this.escapeHtml(code);
         }
       } catch (error) {
-        console.warn(`Prism.js highlighting failed for language: ${lang}`, error);
+        console.warn(`Prism.js highlighting failed for language: ${targetLang}`, error);
         highlightedCode = this.escapeHtml(code);
       }
       
-      return `<pre class="language-${lang}"><code class="language-${lang}">${highlightedCode}</code></pre>`;
+      // Generate enhanced HTML with line numbers and metadata
+      return this.generateEnhancedCodeBlock(highlightedCode, {
+        id: codeId,
+        language: targetLang,
+        lineCount: code.split('\n').length,
+        showLineNumbers: metadata.showLineNumbers ?? (code.split('\n').length > 10),
+        title: metadata.title,
+        fileName: metadata.fileName,
+        isCollapsible: metadata.isCollapsible,
+        highlightLines: metadata.highlightLines
+      });
     };
 
     marked.setOptions({
@@ -149,14 +181,22 @@ export class MarkdownProcessorService {
     const codeBlocks: CodeBlock[] = [];
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     let match;
+    let blockIndex = 0;
     
     while ((match = codeBlockRegex.exec(markdown)) !== null) {
       const language = match[1] || 'text';
       const code = match[2].trim();
+      const detectedLang = this.detectLanguage(code, language);
+      const metadata = this.parseCodeBlockMetadata(code, language);
+      
       codeBlocks.push({
+        id: this.generateCodeBlockId(blockIndex++),
         language,
+        detectedLanguage: detectedLang,
         code,
-        lineCount: code.split('\n').length
+        lineCount: code.split('\n').length,
+        showLineNumbers: metadata.showLineNumbers ?? (code.split('\n').length > 10),
+        ...metadata
       });
     }
     
@@ -288,6 +328,173 @@ export class MarkdownProcessorService {
       'markdown',
       'text'
     ];
+  }
+
+  /**
+   * Generate unique ID for code blocks
+   */
+  private generateCodeBlockId(index: number): string {
+    return `code-block-${index}-${Date.now()}`;
+  }
+
+  /**
+   * Detect programming language from code content
+   */
+  private detectLanguage(code: string, declaredLang: string): string {
+    // If language is explicitly declared and valid, use it
+    if (declaredLang && declaredLang !== 'text' && Prism.languages[declaredLang]) {
+      return declaredLang;
+    }
+
+    // Simple heuristics for language detection
+    const codeLines = code.trim().split('\n');
+    const firstLine = codeLines[0]?.trim() || '';
+    const codeContent = code.toLowerCase();
+
+    // TypeScript/JavaScript detection
+    if (codeContent.includes('interface ') || 
+        codeContent.includes('type ') || 
+        codeContent.includes(': string') ||
+        codeContent.includes(': number') ||
+        codeContent.includes('readonly ')) {
+      return 'typescript';
+    }
+
+    if (codeContent.includes('function ') || 
+        codeContent.includes('const ') || 
+        codeContent.includes('let ') ||
+        codeContent.includes('var ') ||
+        codeContent.includes('=>')) {
+      return 'javascript';
+    }
+
+    // HTML detection
+    if (codeContent.includes('<html>') || 
+        codeContent.includes('<!doctype') ||
+        (codeContent.includes('<') && codeContent.includes('>'))) {
+      return 'html';
+    }
+
+    // CSS/SCSS detection
+    if (codeContent.includes('{') && 
+        (codeContent.includes('color:') || 
+         codeContent.includes('background:') ||
+         codeContent.includes('margin:') ||
+         codeContent.includes('$'))) {
+      return codeContent.includes('$') ? 'scss' : 'css';
+    }
+
+    // JSON detection
+    if ((firstLine.startsWith('{') || firstLine.startsWith('[')) &&
+        codeContent.includes('"') && codeContent.includes(':')) {
+      return 'json';
+    }
+
+    // Bash/Shell detection
+    if (firstLine.startsWith('#!') || 
+        codeContent.includes('npm ') ||
+        codeContent.includes('ng ') ||
+        codeContent.includes('$ ')) {
+      return 'bash';
+    }
+
+    return declaredLang || 'text';
+  }
+
+  /**
+   * Parse metadata from code block comments
+   */
+  private parseCodeBlockMetadata(code: string, language: string): Partial<CodeBlock> {
+    const metadata: Partial<CodeBlock> = {};
+    const lines = code.split('\n');
+    
+    // Look for metadata in first few lines
+    for (let i = 0; i < Math.min(3, lines.length); i++) {
+      const line = lines[i].trim();
+      
+      // Title from comment
+      if (line.startsWith('// Title:') || line.startsWith('/* Title:')) {
+        metadata.title = line.replace(/^(\/\/|\/\*)\s*Title:\s*/, '').replace(/\*\/$/, '').trim();
+      }
+      
+      // Filename from comment
+      if (line.startsWith('// File:') || line.startsWith('/* File:')) {
+        metadata.fileName = line.replace(/^(\/\/|\/\*)\s*File:\s*/, '').replace(/\*\/$/, '').trim();
+      }
+      
+      // Category from comment
+      if (line.startsWith('// Category:') || line.startsWith('/* Category:')) {
+        metadata.category = line.replace(/^(\/\/|\/\*)\s*Category:\s*/, '').replace(/\*\/$/, '').trim();
+      }
+      
+      // Tags from comment
+      if (line.startsWith('// Tags:') || line.startsWith('/* Tags:')) {
+        const tagsStr = line.replace(/^(\/\/|\/\*)\s*Tags:\s*/, '').replace(/\*\/$/, '').trim();
+        metadata.tags = tagsStr.split(',').map(tag => tag.trim());
+      }
+    }
+    
+    // Set defaults based on language and content
+    metadata.isCollapsible = lines.length > 20;
+    metadata.showLineNumbers = lines.length > 10;
+    
+    return metadata;
+  }
+
+  /**
+   * Generate enhanced HTML for code blocks with line numbers and metadata
+   */
+  private generateEnhancedCodeBlock(highlightedCode: string, options: {
+    id: string;
+    language: string;
+    lineCount: number;
+    showLineNumbers?: boolean;
+    title?: string;
+    fileName?: string;
+    isCollapsible?: boolean;
+    highlightLines?: number[];
+  }): string {
+    const { id, language, showLineNumbers, title, fileName, isCollapsible } = options;
+    
+    let html = `<div class="enhanced-code-block" data-code-id="${id}" data-language="${language}">`;
+    
+    // Header with metadata
+    if (title || fileName) {
+      html += `<div class="code-header">`;
+      if (title) {
+        html += `<span class="code-title">${title}</span>`;
+      }
+      if (fileName) {
+        html += `<span class="code-filename">${fileName}</span>`;
+      }
+      html += `<div class="code-actions">
+        <button class="copy-code-btn" data-code-id="${id}" title="Copy to clipboard">
+          <span class="material-icons">content_copy</span>
+        </button>
+      </div>`;
+      html += `</div>`;
+    }
+    
+    // Code content with optional line numbers
+    if (showLineNumbers) {
+      const lines = highlightedCode.split('\n');
+      html += `<div class="code-container">
+        <div class="line-numbers">`;
+      
+      for (let i = 1; i <= lines.length; i++) {
+        html += `<span class="line-number">${i}</span>`;
+      }
+      
+      html += `</div>
+        <pre class="language-${language}"><code class="language-${language}">${highlightedCode}</code></pre>
+      </div>`;
+    } else {
+      html += `<pre class="language-${language}"><code class="language-${language}">${highlightedCode}</code></pre>`;
+    }
+    
+    html += `</div>`;
+    
+    return html;
   }
 
   /**
