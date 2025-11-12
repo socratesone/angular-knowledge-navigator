@@ -1,3 +1,7 @@
+// Optimized code highlighter styles
+$primary: #2196f3;
+$success: #4caf50;
+
 .code-highlighter {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -6,7 +10,7 @@
   overflow: hidden;
 
   &.best-practice {
-    border-left: 4px solid #4caf50;
+    border-left: 4px solid $success;
     
     .code-header {
       background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
@@ -14,7 +18,7 @@
   }
 
   &.constitutional {
-    border-left: 4px solid #2196f3;
+    border-left: 4px solid $primary;
     
     .code-header {
       background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
@@ -23,7 +27,7 @@
 
   .code-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: flex-start;
     padding: 1rem;
     background: #f5f5f5;
@@ -33,9 +37,8 @@
       flex: 1;
 
       .code-title {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.1rem;
-        font-weight: 600;
+        margin: 0 0 0.5rem;
+        font: 600 1.1rem/1.4 inherit;
         color: #333;
       }
 
@@ -48,35 +51,18 @@
           font-size: 0.75rem;
           height: 24px;
           
-          &.language-chip {
-            background-color: #1976d2;
+          &.language-tag {
+            background: $primary;
             color: white;
           }
 
-          &.best-practice-chip {
-            background-color: #4caf50;
+          &.best-practice-tag {
+            background: $success;
             color: white;
-
-            mat-icon {
-              font-size: 14px;
-              width: 14px;
-              height: 14px;
-            }
           }
 
-          &.constitutional-chip {
-            background-color: #2196f3;
-            color: white;
-
-            mat-icon {
-              font-size: 14px;
-              width: 14px;
-              height: 14px;
-            }
-          }
-
-          &.difficulty-chip {
-            background-color: #ff9800;
+          &.constitutional-tag {
+            background: $primary;
             color: white;
           }
         }
@@ -85,225 +71,118 @@
 
     .code-actions {
       display: flex;
-      gap: 0.25rem;
-
-      .mat-mdc-icon-button {
-        width: 36px;
-        height: 36px;
-
+      gap: 0.5rem;
+      
+      .copy-button,
+      .expand-button {
+        padding: 0.5rem;
+        min-width: auto;
+        line-height: 1;
+        
         mat-icon {
           font-size: 18px;
           width: 18px;
           height: 18px;
         }
       }
-
-      .copy-button:hover {
-        background-color: rgba(76, 175, 80, 0.1);
-      }
-
-      .expand-button:hover {
-        background-color: rgba(33, 150, 243, 0.1);
-      }
     }
   }
 
-  .code-description {
-    padding: 0.75rem 1rem;
-    background: #fff;
-    border-bottom: 1px solid #f0f0f0;
-
-    p {
-      margin: 0;
-      color: #666;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-  }
-
-  .code-container {
+  .code-content {
     position: relative;
-    background: #fff;
+    max-height: 400px;
+    overflow-y: auto;
 
-    &:not(.expanded) {
-      max-height: 400px;
-      overflow: hidden;
+    &.expanded {
+      max-height: none;
     }
 
-    .code-block {
+    pre {
       margin: 0;
       padding: 1rem;
-      background: transparent;
-      border: none;
+      background: #fff;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.4;
       overflow-x: auto;
-      font-family: 'Courier New', Monaco, 'Lucida Console', monospace;
-      font-size: 0.875rem;
-      line-height: 1.5;
-
+      
       code {
+        font-family: inherit;
+        font-size: inherit;
         background: transparent;
         padding: 0;
-        border: none;
-        white-space: pre;
-        
-        // Syntax highlighting colors
-        &.language-typescript {
-          .token.keyword {
-            color: #0000ff;
-            font-weight: bold;
-          }
-          
-          .token.string {
-            color: #a31515;
-          }
-          
-          .token.comment {
-            color: #008000;
-            font-style: italic;
-          }
-          
-          .token.function {
-            color: #795e26;
-          }
-          
-          .token.class-name {
-            color: #267f99;
-          }
-        }
-
-        &.language-html {
-          .token.tag {
-            color: #800000;
-          }
-          
-          .token.attr-name {
-            color: #ff0000;
-          }
-          
-          .token.attr-value {
-            color: #0000ff;
-          }
-        }
-
-        &.language-scss {
-          .token.property {
-            color: #ff0000;
-          }
-          
-          .token.selector {
-            color: #800000;
-          }
-          
-          .token.number {
-            color: #09885a;
-          }
-        }
       }
     }
 
-    .code-gradient {
+    .line-numbers {
       position: absolute;
-      bottom: 0;
       left: 0;
-      right: 0;
-      height: 40px;
-      background: linear-gradient(transparent, #fff);
-      pointer-events: none;
+      top: 0;
+      bottom: 0;
+      width: 3rem;
+      background: #f8f8f8;
+      border-right: 1px solid #e0e0e0;
+      padding: 1rem 0.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: #999;
+      -webkit-user-select: none;
+      user-select: none;
+      z-index: 1;
+    }
+
+    &.with-line-numbers pre {
+      padding-left: 4rem;
     }
   }
 
-  .code-explanation,
-  .code-output,
-  .code-caveats {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid #f0f0f0;
-    background: #fff;
+  .code-explanation {
+    padding: 1rem;
+    background: #f9f9f9;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #666;
 
-    h5 {
-      margin: 0 0 0.5rem 0;
-      font-size: 0.9rem;
-      font-weight: 600;
+    h4 {
+      margin: 0 0 0.5rem;
+      font: 600 1rem/1.4 inherit;
       color: #333;
-    }
-
-    p, ul {
-      margin: 0;
-      font-size: 0.85rem;
-      color: #666;
-      line-height: 1.4;
     }
 
     ul {
+      margin: 0.5rem 0;
       padding-left: 1.2rem;
-    }
 
-    li {
-      margin-bottom: 0.25rem;
-    }
-  }
-
-  .code-output {
-    .output-block {
-      background: #f8f8f8;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      padding: 0.5rem;
-      margin: 0.5rem 0 0 0;
-      font-family: 'Courier New', Monaco, monospace;
-      font-size: 0.8rem;
-      overflow-x: auto;
-    }
-  }
-
-  .code-caveats {
-    background: #fff3e0;
-    border-left: 3px solid #ff9800;
-
-    h5 {
-      color: #e65100;
-    }
-  }
-
-  .related-concepts {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid #f0f0f0;
-    background: #f9f9f9;
-
-    h5 {
-      margin: 0 0 0.5rem 0;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .concept-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-
-      .concept-link {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        background: #1976d2;
-        color: white;
-        text-decoration: none;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        transition: background-color 0.2s ease;
-
-        &:hover {
-          background: #1565c0;
-        }
+      li {
+        margin-bottom: 0.25rem;
       }
+    }
+  }
+
+  .copy-notification {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    &.show {
+      opacity: 1;
     }
   }
 }
 
-// Responsive design
+// Mobile optimizations  
 @media (max-width: 768px) {
   .code-highlighter {
-    margin: 0.5rem 0;
-
     .code-header {
       flex-direction: column;
       gap: 0.5rem;
@@ -313,19 +192,11 @@
       }
     }
 
-    .code-container {
-      .code-block {
-        padding: 0.75rem;
-        font-size: 0.8rem;
-      }
-    }
+    .code-content {
+      max-height: 300px;
 
-    .related-concepts {
-      .concept-links {
-        .concept-link {
-          font-size: 0.7rem;
-          padding: 0.2rem 0.4rem;
-        }
+      pre {
+        font-size: 0.8rem;
       }
     }
   }
