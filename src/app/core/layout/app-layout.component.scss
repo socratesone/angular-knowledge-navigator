@@ -2,6 +2,37 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+
+  // Responsive layout classes
+  &.mobile-layout {
+    .app-header {
+      .app-title {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+      }
+      
+      .search-toggle {
+        margin-right: 0.25rem;
+      }
+    }
+
+    .app-sidenav {
+      width: 280px; // Full-width mobile drawer
+      max-width: 85vw;
+    }
+  }
+
+  &.tablet-layout {
+    .app-sidenav {
+      width: 320px;
+    }
+  }
+
+  &.desktop-layout {
+    .app-sidenav {
+      width: 280px;
+    }
+  }
 }
 
 .app-header {
@@ -144,8 +175,70 @@
 }
 
 /* Responsive behavior for mobile devices */
-@media (max-width: 767px) {
-  .app-header .app-title {
-    font-size: 1.1rem;
+@media (max-width: 767.98px) {
+  .app-layout {
+    .app-header {
+      height: 56px; // Mobile toolbar height
+      
+      .app-title {
+        font-size: 1.1rem;
+      }
+      
+      .menu-toggle {
+        margin-right: 8px;
+      }
+    }
+    
+    .app-container {
+      // Account for mobile toolbar height
+      margin-top: 56px;
+      height: calc(100vh - 56px);
+    }
+    
+    .app-sidenav {
+      width: 100vw;
+      max-width: 320px;
+      
+      .sidenav-content {
+        .navigation-panel {
+          app-navigation-tree {
+            padding: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Tablet specific styles */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .app-layout {
+    .app-sidenav {
+      width: 320px;
+    }
+    
+    .app-content {
+      .content-area {
+        padding: 1.5rem;
+      }
+    }
+  }
+}
+
+/* Desktop specific styles */
+@media (min-width: 1024px) {
+  .app-layout {
+    .app-container {
+      .app-sidenav {
+        // Desktop sidenav is always visible by default
+        border-right: 1px solid #e0e0e0;
+      }
+    }
+    
+    .app-content {
+      .content-area {
+        padding: 2rem;
+      }
+    }
   }
 }

@@ -1,11 +1,14 @@
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, effect, inject, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../core/services/navigation.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 
 @Component({
   selector: 'app-navigation-tree',
@@ -15,21 +18,37 @@ import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../c
     MatTreeModule,
     MatIconModule,
     MatButtonModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSidenavModule,
+    MatToolbarModule
   ],
   template: `
-    <div class="navigation-tree">
-      <div class="tree-header">
-        <h3>Learning Path</h3>
-        <div class="tree-actions">
-          <button mat-icon-button (click)="expandAll()" title="Expand All">
-            <mat-icon>unfold_more</mat-icon>
+    <div class="navigation-tree" [class.mobile-layout]="breakpointService.isMobile()">
+      <!-- Mobile Header with Close Button -->
+      @if (breakpointService.isMobile() && showMobileHeader) {
+        <mat-toolbar class="mobile-toolbar">
+          <span>Learning Path</span>
+          <span class="toolbar-spacer"></span>
+          <button mat-icon-button (click)="closeMobileNavigation()" aria-label="Close navigation">
+            <mat-icon>close</mat-icon>
           </button>
-          <button mat-icon-button (click)="collapseAll()" title="Collapse All">
-            <mat-icon>unfold_less</mat-icon>
-          </button>
+        </mat-toolbar>
+      }
+
+      <!-- Desktop/Tablet Header -->
+      @if (!breakpointService.isMobile() || !showMobileHeader) {
+        <div class="tree-header">
+          <h3>Learning Path</h3>
+          <div class="tree-actions">
+            <button mat-icon-button (click)="expandAll()" title="Expand All">
+              <mat-icon>unfold_more</mat-icon>
+            </button>
+            <button mat-icon-button (click)="collapseAll()" title="Collapse All">
+              <mat-icon>unfold_less</mat-icon>
+            </button>
+          </div>
         </div>
-      </div>
+      }
 
       @if (isLoading()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -97,6 +116,10 @@ import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../c
 })
 export class NavigationTreeComponent implements OnInit {
   
+  // Mobile navigation inputs/outputs
+  @Input() showMobileHeader = true;
+  @Output() mobileNavigationClose = new EventEmitter<void>();
+
   // Expose enums to template
   readonly NodeType = NodeType;
   readonly SkillLevel = SkillLevel;
@@ -109,10 +132,12 @@ export class NavigationTreeComponent implements OnInit {
   // Computed values
   readonly hasSelectedNode = computed(() => this.selectedNodeId() !== null);
 
-  constructor(
-    private navigationService: NavigationService,
-    private router: Router
-  ) {
+  // Constitutional services
+  readonly breakpointService = inject(BreakpointService);
+  private navigationService = inject(NavigationService);
+  private router = inject(Router);
+
+  constructor() {
     // Effect to track selected topic changes
     effect(() => {
       const selectedTopic = this.navigationService.selectedTopic$();
@@ -145,7 +170,19 @@ export class NavigationTreeComponent implements OnInit {
       // Navigate to the topic
       const [level, topicId] = node.id.split('/');
       this.router.navigate(['/concepts', level, topicId]);
+
+      // Close mobile navigation after selection
+      if (this.breakpointService.isMobile()) {
+        this.closeMobileNavigation();
+      }
     }
+  }
+
+  /**
+   * Close mobile navigation drawer
+   */
+  closeMobileNavigation(): void {
+    this.mobileNavigationClose.emit();
   }
 
   /**

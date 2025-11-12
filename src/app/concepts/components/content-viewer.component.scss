@@ -2,6 +2,20 @@
   padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  
+  // Mobile-first responsive padding
+  @media (max-width: 767.98px) {
+    padding: 0.75rem;
+    max-width: 100%;
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    padding: 1.5rem;
+  }
+  
+  @media (min-width: 1024px) {
+    padding: 2rem;
+  }
 
   .loading-container {
     display: flex;
@@ -31,16 +45,53 @@
           color: #1976d2;
           margin-top: 1.5rem;
           margin-bottom: 0.5rem;
+          
+          // Responsive heading typography
+          @media (max-width: 767.98px) {
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+          }
         }
         
         h1 {
           border-bottom: 2px solid #e0e0e0;
           padding-bottom: 0.5rem;
+          
+          @media (max-width: 767.98px) {
+            font-size: 1.75rem;
+            padding-bottom: 0.375rem;
+          }
+          
+          @media (min-width: 768px) and (max-width: 1023.98px) {
+            font-size: 1.875rem;
+          }
+        }
+        
+        h2 {
+          @media (max-width: 767.98px) {
+            font-size: 1.5rem;
+          }
+        }
+        
+        h3 {
+          @media (max-width: 767.98px) {
+            font-size: 1.25rem;
+          }
         }
         
         p {
           margin-bottom: 1rem;
           text-align: justify;
+          
+          @media (max-width: 767.98px) {
+            text-align: left; // Better readability on mobile
+            margin-bottom: 0.875rem;
+            line-height: 1.6;
+          }
+          
+          @media (min-width: 1024px) {
+            line-height: 1.7;
+          }
         }
         
         ul, ol {
@@ -60,12 +111,46 @@
           overflow-x: auto;
           margin: 1rem 0;
           
+          // Responsive code block styling
+          @media (max-width: 767.98px) {
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            border-radius: 3px;
+            // Ensure horizontal scrolling on mobile
+            max-width: 100%;
+            overflow-x: auto;
+            
+            // Mobile-friendly scrollbar
+            &::-webkit-scrollbar {
+              height: 8px;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+              background-color: #ccc;
+              border-radius: 4px;
+            }
+          }
+          
+          @media (min-width: 768px) and (max-width: 1023.98px) {
+            padding: 1.25rem;
+          }
+          
           code {
             background: transparent;
             padding: 0;
             border: none;
             font-family: 'Courier New', Monaco, monospace;
             font-size: 0.9rem;
+            
+            // Responsive font sizes for code
+            @media (max-width: 767.98px) {
+              font-size: 0.8rem;
+              line-height: 1.4;
+            }
+            
+            @media (min-width: 1024px) {
+              font-size: 0.95rem;
+            }
           }
         }
         
@@ -108,13 +193,89 @@
   }
 }
 
-// Responsive design
-@media (max-width: 768px) {
+// Enhanced responsive design
+@media (max-width: 767.98px) {
   .content-viewer {
-    padding: 0.5rem;
-    
     .content-card, .error-card, .welcome-card {
-      margin: 0.5rem 0;
+      margin: 0.75rem 0;
+      
+      mat-card-content {
+        padding: 1rem !important;
+        
+        .markdown-content {
+          // Mobile-optimized reading experience
+          font-size: 0.95rem;
+          
+          // Better touch targets for interactive elements
+          a {
+            padding: 2px 4px;
+            margin: -2px -4px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+          }
+          
+          // Mobile-friendly lists
+          ul, ol {
+            padding-left: 1.25rem;
+            
+            li {
+              margin-bottom: 0.5rem;
+              line-height: 1.5;
+            }
+          }
+          
+          // Mobile-friendly blockquotes
+          blockquote {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+
+    .loading-container {
+      padding: 1.5rem;
+      
+      p {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// Tablet optimizations
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .content-viewer {
+    .content-card, .error-card, .welcome-card {
+      margin: 1.25rem 0;
+      
+      mat-card-content {
+        padding: 1.5rem !important;
+      }
+    }
+  }
+}
+
+// Desktop optimizations
+@media (min-width: 1024px) {
+  .content-viewer {
+    .content-card, .error-card, .welcome-card {
+      margin: 1.5rem 0;
+      
+      mat-card-content {
+        padding: 2rem !important;
+        
+        .markdown-content {
+          font-size: 1.05rem;
+          
+          // Better desktop reading experience
+          p {
+            max-width: 80ch; // Optimal line length for reading
+          }
+        }
+      }
     }
   }
 }

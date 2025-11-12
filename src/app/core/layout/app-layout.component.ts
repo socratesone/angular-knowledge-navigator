@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ViewChild, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, signal, computed, inject, effect, AfterViewInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -9,7 +9,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSidenav } from '@angular/material/sidenav';
 import { NavigationTreeComponent } from '../../navigation/components/navigation-tree.component';
 import { SearchComponent } from '../../navigation/components/search.component';
+import { MobileMenuComponent } from './mobile-menu.component';
 import { SearchService } from '../../core/services/search.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
+import { GestureService } from '../../core/services/gesture.service';
 
 @Component({
   selector: 'app-layout',
@@ -23,18 +26,32 @@ import { SearchService } from '../../core/services/search.service';
     MatButtonModule,
     MatTooltipModule,
     NavigationTreeComponent,
-    SearchComponent
+    SearchComponent,
+    MobileMenuComponent
   ],
   template: `
-    <div class="app-layout" data-testid="app-layout">
+    <div class="app-layout" 
+         [class.mobile-layout]="breakpointService.isMobile()"
+         [class.tablet-layout]="breakpointService.isTablet()"
+         [class.desktop-layout]="breakpointService.isDesktop()"
+         data-testid="app-layout">
       <mat-toolbar color="primary" class="app-header">
-        <button 
-          mat-icon-button 
-          (click)="toggleSidenav()" 
-          class="menu-toggle"
-          matTooltip="Toggle navigation">
-          <mat-icon>menu</mat-icon>
-        </button>
+        <!-- Mobile menu button -->
+        @if (breakpointService.useDrawer()) {
+          <app-mobile-menu
+            [isMenuOpen]="sidenavOpened()"
+            (menuToggle)="onMobileMenuToggle($event)">
+          </app-mobile-menu>
+        } @else if (!sidenavOpened()) {
+          <!-- Desktop menu toggle when sidebar is closed -->
+          <button 
+            mat-icon-button 
+            (click)="toggleSidenav()" 
+            class="menu-toggle"
+            matTooltip="Open navigation">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
         
         <span class="app-title">Angular Knowledge Navigator</span>
         
@@ -65,9 +82,11 @@ import { SearchService } from '../../core/services/search.service';
       <mat-sidenav-container class="app-container">
         <mat-sidenav 
           #sidenav 
-          mode="side" 
+          [mode]="sidenavMode()" 
           [opened]="sidenavOpened()" 
+          [disableClose]="breakpointService.isDesktop()"
           class="app-sidenav"
+          (closedStart)="onSidenavClosed()"
           [fixedInViewport]="true"
         >
           <div class="sidenav-content">
@@ -99,7 +118,11 @@ import { SearchService } from '../../core/services/search.service';
                     <mat-icon>search</mat-icon>
                   </button>
                 </div>
-                <app-navigation-tree data-testid="navigation-tree"></app-navigation-tree>
+                <app-navigation-tree 
+                  [showMobileHeader]="breakpointService.isMobile()"
+                  (mobileNavigationClose)="closeMobileNavigation()"
+                  data-testid="navigation-tree">
+                </app-navigation-tree>
               </div>
             }
           </div>
@@ -116,8 +139,14 @@ import { SearchService } from '../../core/services/search.service';
   styleUrls: ['./app-layout.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppLayoutComponent {
+export class AppLayoutComponent implements AfterViewInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
+  @ViewChild('sidenav', { read: ElementRef }) sidenavElement!: ElementRef<HTMLElement>;
+  
+  // Constitutional services
+  readonly breakpointService = inject(BreakpointService);
+  private searchService = inject(SearchService);
+  private gestureService = inject(GestureService);
   
   // Component state
   private readonly _showSearch = signal<boolean>(false);
@@ -127,8 +156,86 @@ export class AppLayoutComponent {
   readonly showSearch = computed(() => this._showSearch());
   readonly sidenavOpened = computed(() => this._sidenavOpened());
   readonly searchResultsCount = computed(() => this.searchService.enhancedSearchState().totalResults);
+  
+  // Responsive computed properties
+  readonly sidenavMode = computed(() => {
+    return this.breakpointService.useDrawer() ? 'over' : 'side';
+  });
 
-  constructor(private searchService: SearchService) {}
+  constructor() {
+    // Effect to handle responsive behavior
+    effect(() => {
+      const responsiveState = this.breakpointService.responsiveState();
+      
+      // Close sidenav on mobile when switching to mobile layout
+      if (responsiveState.isMobile && this._sidenavOpened()) {
+        this._sidenavOpened.set(false);
+      }
+      
+      // Auto-open sidenav on desktop
+      if (responsiveState.isDesktop && !this._sidenavOpened()) {
+        this._sidenavOpened.set(true);
+      }
+    });
+
+    // Setup edge gestures immediately
+    this.setupEdgeGestures();
+  }
+
+  ngAfterViewInit(): void {
+    // Setup sidenav-specific gestures after view init
+    this.setupSidenavGestures();
+  }
+
+  /**
+   * Setup edge gesture handlers for mobile navigation
+   */
+  private setupEdgeGestures(): void {
+    // Enable edge swipe gestures for opening/closing navigation
+    this.gestureService.enableEdgeSwipe(
+      () => {
+        // Swipe right from left edge - open navigation
+        if (!this._sidenavOpened() && this.breakpointService.useDrawer()) {
+          this._sidenavOpened.set(true);
+          if (this.sidenav) {
+            this.sidenav.open();
+          }
+        }
+      },
+      () => {
+        // Swipe left from right edge - close navigation if open
+        if (this._sidenavOpened() && this.breakpointService.useDrawer()) {
+          this._sidenavOpened.set(false);
+          if (this.sidenav) {
+            this.sidenav.close();
+          }
+        }
+      }
+    );
+  }
+
+  /**
+   * Setup sidenav-specific gesture handlers
+   */
+  private setupSidenavGestures(): void {
+    if (!this.sidenavElement) return;
+
+    // Enable swipe left on sidenav content to close
+    this.gestureService.enableSwipeGestures(
+      this.sidenavElement.nativeElement,
+      (gesture) => {
+        if (gesture.direction === 'left' && 
+            this._sidenavOpened() && 
+            this.breakpointService.useDrawer()) {
+          this._sidenavOpened.set(false);
+          if (this.sidenav) {
+            this.sidenav.close();
+          }
+        }
+      },
+      { horizontal: true, vertical: false, threshold: 75 }
+    );
+  }
   
   /**
    * Toggle sidenav open/closed
@@ -179,6 +286,39 @@ export class AppLayoutComponent {
       this._sidenavOpened.set(true);
       if (this.sidenav) {
         this.sidenav.open();
+      }
+    }
+  }
+
+  /**
+   * Handle mobile navigation close
+   */
+  closeMobileNavigation(): void {
+    if (this.breakpointService.useDrawer()) {
+      this._sidenavOpened.set(false);
+      if (this.sidenav) {
+        this.sidenav.close();
+      }
+    }
+  }
+
+  /**
+   * Handle sidenav closed event
+   */
+  onSidenavClosed(): void {
+    this._sidenavOpened.set(false);
+  }
+
+  /**
+   * Handle mobile menu toggle from mobile menu component
+   */
+  onMobileMenuToggle(isOpen: boolean): void {
+    this._sidenavOpened.set(isOpen);
+    if (this.sidenav) {
+      if (isOpen) {
+        this.sidenav.open();
+      } else {
+        this.sidenav.close();
       }
     }
   }
