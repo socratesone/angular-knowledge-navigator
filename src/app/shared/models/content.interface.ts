@@ -74,6 +74,23 @@ export interface ContentState {
   error?: ContentError;
   lastLoaded: Date;
   scrollPosition: number;
+  metadata?: ContentFrontmatter; // YAML frontmatter metadata
+}
+
+export interface ContentFrontmatter {
+  title?: string;
+  slug?: string;
+  category?: string;
+  skillLevel?: string;
+  difficulty?: number;
+  estimatedReadingTime?: number;
+  constitutional?: boolean;
+  tags?: string[];
+  prerequisites?: string[];
+  relatedTopics?: string[];
+  lastUpdated?: string;
+  contentPath?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 export enum LoadingStatus {

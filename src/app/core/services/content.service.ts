@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
-import { marked } from 'marked';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ContentState, LoadingStatus, ContentError, CodeExample, BestPractice } from '../../shared/models';
+import { MarkdownProcessorService, ProcessedContent } from './markdown-processor.service';
 
 // Re-export for backward compatibility (need runtime values for enums)
 export { LoadingStatus } from '../../shared/models';
@@ -26,23 +26,11 @@ export class ContentService {
 
   readonly currentContent$ = this.currentContentSubject.asObservable();
 
-  // Configure marked for syntax highlighting and security
-  private readonly markedOptions = {
-    highlight: (code: string, lang: string) => {
-      // Prism.js highlighting would be integrated here
-      // For now, return code wrapped in pre/code tags
-      return `<pre><code class="language-${lang}">${this.escapeHtml(code)}</code></pre>`;
-    },
-    breaks: true,
-    gfm: true
-  };
-
   constructor(
     private http: HttpClient,
-    private sanitizer: DomSanitizer
-  ) {
-    marked.setOptions(this.markedOptions);
-  }
+    private sanitizer: DomSanitizer,
+    private markdownProcessor: MarkdownProcessorService
+  ) {}
 
   /**
    * Load content for a specific topic
@@ -89,20 +77,22 @@ export class ContentService {
   }
 
   /**
-   * Process markdown content and sanitize HTML
+   * Process markdown content with frontmatter support and sanitize HTML
    */
   private processMarkdown(markdown: string, topicId: string): Observable<ContentState> {
     try {
-      const htmlContent = marked(markdown) as string;
-      const sanitizedHtml = this.sanitizer.bypassSecurityTrustHtml(htmlContent);
+      // Use our enhanced markdown processor with frontmatter support
+      const processedContent = this.markdownProcessor.processMarkdown(markdown);
       
       const contentState: ContentState = {
         topicId,
         markdown,
-        renderedHtml: sanitizedHtml,
+        renderedHtml: processedContent.html,
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
-        scrollPosition: 0
+        scrollPosition: 0,
+        // Store frontmatter metadata for potential UI enhancements
+        metadata: processedContent.frontmatter
       };
 
       this.currentContentSubject.next(contentState);
@@ -126,16 +116,18 @@ export class ContentService {
     try {
       // Process cross-references before markdown conversion
       const processedMarkdown = this.processCrossReferences(markdown);
-      const htmlContent = marked(processedMarkdown) as string;
-      const sanitizedHtml = this.sanitizer.bypassSecurityTrustHtml(htmlContent);
+      
+      // Use our enhanced markdown processor with frontmatter support
+      const processedContent = this.markdownProcessor.processMarkdown(processedMarkdown);
       
       const contentState: ContentState = {
         topicId,
         markdown: processedMarkdown,
-        renderedHtml: sanitizedHtml,
+        renderedHtml: processedContent.html,
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
-        scrollPosition: 0
+        scrollPosition: 0,
+        metadata: processedContent.frontmatter
       };
 
       this.currentContentSubject.next(contentState);

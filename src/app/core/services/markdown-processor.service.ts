@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { marked } from 'marked';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as Prism from 'prismjs';
+import * as yaml from 'js-yaml';
 
 // Import specific language support
 import 'prismjs/components/prism-typescript';
@@ -17,6 +18,23 @@ export interface ProcessedContent {
   headings: ContentHeading[];
   codeBlocks: CodeBlock[];
   estimatedReadingTime: number;
+  frontmatter?: ContentFrontmatter;
+}
+
+export interface ContentFrontmatter {
+  title?: string;
+  slug?: string;
+  category?: string;
+  skillLevel?: string;
+  difficulty?: number;
+  estimatedReadingTime?: number;
+  constitutional?: boolean;
+  tags?: string[];
+  prerequisites?: string[];
+  relatedTopics?: string[];
+  lastUpdated?: string;
+  contentPath?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface ContentHeading {
@@ -47,6 +65,9 @@ export class MarkdownProcessorService {
   processMarkdown(markdown: string): ProcessedContent {
     const headings: ContentHeading[] = [];
     const codeBlocks: CodeBlock[] = [];
+    
+    // Extract frontmatter and clean content
+    const { content: cleanMarkdown, frontmatter } = this.extractFrontmatter(markdown);
     
     // Configure renderer to extract metadata
     const renderer = new marked.Renderer();
@@ -89,14 +110,15 @@ export class MarkdownProcessorService {
       gfm: true
     });
 
-    const html = marked(markdown) as string;
+    const html = marked(cleanMarkdown) as string;
     const safeHtml = this.sanitizer.bypassSecurityTrustHtml(html);
     
     return {
       html: safeHtml,
       headings,
       codeBlocks,
-      estimatedReadingTime: this.calculateReadingTime(markdown)
+      estimatedReadingTime: this.calculateReadingTime(cleanMarkdown),
+      frontmatter
     };
   }
 
@@ -168,6 +190,41 @@ export class MarkdownProcessorService {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Extract YAML frontmatter from markdown content
+   */
+  private extractFrontmatter(markdown: string): { content: string; frontmatter?: ContentFrontmatter } {
+    // Check if content starts with frontmatter delimiter
+    if (!markdown.startsWith('---\n')) {
+      return { content: markdown };
+    }
+
+    // Find the closing delimiter
+    const frontmatterEndIndex = markdown.indexOf('\n---\n', 4);
+    if (frontmatterEndIndex === -1) {
+      // No closing delimiter found, treat as regular content
+      return { content: markdown };
+    }
+
+    try {
+      // Extract YAML content (skip the opening '---\n')
+      const yamlContent = markdown.substring(4, frontmatterEndIndex);
+      
+      // Parse YAML frontmatter
+      const frontmatter = yaml.load(yamlContent) as ContentFrontmatter;
+      
+      // Extract the main content (skip the closing '\n---\n')
+      const content = markdown.substring(frontmatterEndIndex + 5).trim();
+      
+      return { content, frontmatter };
+    } catch (error) {
+      console.warn('Failed to parse YAML frontmatter:', error);
+      // If YAML parsing fails, return the original content without frontmatter
+      const content = markdown.substring(frontmatterEndIndex + 5).trim();
+      return { content };
+    }
   }
 
   /**
