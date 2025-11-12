@@ -105,20 +105,46 @@ import { ClipboardService } from '../../core/services/clipboard.service';
         </div>
         
         <!-- Code content -->
-        <div class="code-content">
+        <div class="code-content"
+             (touchstart)="onTouchStart($event)"
+             (touchmove)="onTouchMove($event)"
+             (touchend)="onTouchEnd()"
+             (focus)="onCodeFocus()"
+             tabindex="0">
           <pre class="language-{{ getDisplayLanguage() }}"><code 
             class="language-{{ getDisplayLanguage() }}"
             [innerHTML]="getHighlightedCode()"></code></pre>
         </div>
       </div>
       
+      <!-- Mobile scroll hint -->
+      <div class="mobile-scroll-hint" 
+           [class.visible]="showScrollHint() && breakpointService.isMobile()"
+           *ngIf="breakpointService.isMobile()">
+        ← Scroll to see more →
+      </div>
+      
+      <!-- Swipe gesture indicators -->
+      <div class="swipe-indicator left" 
+           [class.visible]="swipeDirection() === 'left'"
+           *ngIf="breakpointService.isMobile()">
+        <mat-icon>swipe_left</mat-icon>
+      </div>
+      
+      <div class="swipe-indicator right" 
+           [class.visible]="swipeDirection() === 'right'"
+           *ngIf="breakpointService.isMobile()">
+        <mat-icon>swipe_right</mat-icon>
+      </div>
+
       <!-- Collapse overlay for long code blocks -->
       <div class="collapse-overlay" 
            *ngIf="codeBlock().isCollapsible && !expanded()"
-           (click)="toggleExpanded()">
+           (click)="toggleExpanded()"
+           (touchstart)="onCollapseTouch($event)">
         <div class="collapse-message">
           <mat-icon>unfold_more</mat-icon>
-          <span>Click to expand {{ codeBlock().lineCount - 10 }} more lines</span>
+          <span>{{ breakpointService.isMobile() ? 'Tap' : 'Click' }} to expand {{ codeBlock().lineCount - 10 }} more lines</span>
         </div>
       </div>
     </div>
@@ -137,6 +163,8 @@ export class CodeExampleComponent {
   readonly expanded = signal<boolean>(false);
   readonly copying = signal<boolean>(false);
   readonly showLineNumbers = signal<boolean>(false);
+  readonly showScrollHint = signal<boolean>(false);
+  readonly swipeDirection = signal<'left' | 'right' | null>(null);
   
   // Computed properties
   readonly codeBlock = computed(() => this.codeBlockData);
@@ -152,6 +180,29 @@ export class CodeExampleComponent {
     if (this.codeBlock().lineCount <= 15 && !this.codeBlock().isCollapsible) {
       this.expanded.set(true);
     }
+
+    // Mobile-specific initialization
+    if (this.breakpointService.isMobile()) {
+      this.initializeMobileFeatures();
+    }
+  }
+
+  /**
+   * Initialize mobile-specific features
+   */
+  private initializeMobileFeatures(): void {
+    // Show scroll hint for wide code blocks
+    setTimeout(() => {
+      const codeContainer = document.querySelector(`[data-code-id="${this.codeBlock().id}"] .code-content`);
+      if (codeContainer) {
+        const hasHorizontalScroll = codeContainer.scrollWidth > codeContainer.clientWidth;
+        if (hasHorizontalScroll) {
+          this.showScrollHint.set(true);
+          // Auto-hide scroll hint after 3 seconds
+          setTimeout(() => this.showScrollHint.set(false), 3000);
+        }
+      }
+    }, 100);
   }
   
   /**
@@ -284,6 +335,87 @@ export class CodeExampleComponent {
   }
   
   /**
+   * Handle touch events on collapse overlay (mobile enhancement)
+   */
+  onCollapseTouch(event: TouchEvent): void {
+    if (!this.breakpointService.isMobile()) return;
+    
+    // Provide haptic feedback if available
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+    
+    // Visual feedback
+    const target = event.currentTarget as HTMLElement;
+    target.style.transform = 'scale(0.98)';
+    setTimeout(() => {
+      target.style.transform = '';
+    }, 150);
+  }
+
+  /**
+   * Handle touch start for swipe detection (future enhancement)
+   */
+  onTouchStart(event: TouchEvent): void {
+    if (!this.breakpointService.isMobile()) return;
+    
+    const touch = event.touches[0];
+    this.touchStartX = touch.clientX;
+    this.touchStartY = touch.clientY;
+  }
+
+  /**
+   * Handle touch move for swipe feedback
+   */
+  onTouchMove(event: TouchEvent): void {
+    if (!this.breakpointService.isMobile() || 
+        this.touchStartX === undefined || 
+        this.touchStartY === undefined) return;
+    
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - this.touchStartY;
+    
+    // Only process horizontal swipes
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+      const direction = deltaX > 0 ? 'right' : 'left';
+      this.swipeDirection.set(direction);
+    }
+  }
+
+  /**
+   * Handle touch end for swipe completion
+   */
+  onTouchEnd(): void {
+    if (!this.breakpointService.isMobile()) return;
+    
+    // Reset swipe indicators
+    setTimeout(() => {
+      this.swipeDirection.set(null);
+    }, 300);
+    
+    this.touchStartX = undefined;
+    this.touchStartY = undefined;
+  }
+
+  /**
+   * Show mobile keyboard-friendly focus
+   */
+  onCodeFocus(): void {
+    if (this.breakpointService.isMobile()) {
+      // Scroll the focused code block into view
+      const codeElement = document.querySelector(`[data-code-id="${this.codeBlock().id}"]`);
+      if (codeElement) {
+        codeElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+    }
+  }
+
+  /**
    * Escape HTML to prevent XSS
    */
   private escapeHtml(text: string): string {
@@ -291,4 +423,8 @@ export class CodeExampleComponent {
     div.textContent = text;
     return div.innerHTML;
   }
+
+  // Touch tracking for swipe gestures
+  private touchStartX?: number;
+  private touchStartY?: number;
 }
