@@ -4,6 +4,13 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as Prism from 'prismjs';
 import * as yaml from 'js-yaml';
 
+import { 
+  ArticleMetadata, 
+  TOCSection, 
+  ProcessedCodeBlock,
+  SkillLevel 
+} from '../../shared/models/vocabulary.model';
+
 // Import specific language support
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-javascript';
@@ -503,5 +510,226 @@ export class MarkdownProcessorService {
   isLanguageSupported(language: string): boolean {
     return this.getSupportedLanguages().includes(language) || 
            (language in Prism.languages);
+  }
+
+  /**
+   * Extract comprehensive article metadata
+   * @param markdown Raw markdown content
+   * @param articleId Article identifier
+   * @returns Complete article metadata
+   */
+  extractArticleMetadata(markdown: string, articleId: string): ArticleMetadata {
+    const { content, frontmatter } = this.extractFrontmatter(markdown);
+    const headings = this.extractHeadings(content);
+    const codeBlocks = this.extractCodeBlocks(content);
+    const wordCount = this.countWords(content);
+    const readingTime = this.calculateReadingTime(content);
+
+    return {
+      id: articleId,
+      title: frontmatter?.title || this.extractTitleFromContent(content) || 'Untitled',
+      level: this.mapSkillLevel(frontmatter?.skillLevel || frontmatter?.category),
+      category: this.extractCategory(articleId, frontmatter?.category),
+      readingTime,
+      wordCount,
+      codeBlockCount: codeBlocks.length,
+      tableOfContents: this.buildTOCHierarchy(headings),
+      hasInteractiveExamples: this.hasInteractiveExamples(codeBlocks),
+      tags: frontmatter?.tags || [],
+      relatedTopics: frontmatter?.relatedTopics || [],
+      nextTopic: frontmatter?.['nextTopic'],
+      lastUpdated: frontmatter?.lastUpdated ? new Date(frontmatter.lastUpdated) : new Date(),
+      contentHash: this.generateContentHash(content)
+    };
+  }
+
+  /**
+   * Generate table of contents with proper hierarchy
+   * @param content Markdown content
+   * @returns Hierarchical TOC structure
+   */
+  generateTOCFromContent(content: string): TOCSection[] {
+    const headings = this.extractHeadings(content);
+    return this.buildTOCHierarchy(headings);
+  }
+
+  /**
+   * Calculate reading time with configurable words per minute
+   * @param content Text content
+   * @param wordsPerMinute Reading speed (default: 250)
+   * @returns Estimated reading time in minutes
+   */
+  calculateReadingTimeCustom(content: string, wordsPerMinute: number = 250): number {
+    const wordCount = this.countWords(content);
+    return Math.ceil(wordCount / wordsPerMinute);
+  }
+
+  /**
+   * Generate anchor IDs for headings
+   * @param title Heading text
+   * @returns URL-safe anchor ID
+   */
+  generateAnchorId(title: string): string {
+    return this.slugify(title);
+  }
+
+  /**
+   * Process content for vocabulary term detection
+   * @param content Markdown content
+   * @returns Enhanced content with term markers
+   */
+  prepareContentForVocabulary(content: string): string {
+    // Add data attributes to potential vocabulary terms
+    let processedContent = content;
+
+    // Common Angular terms that should be highlighted
+    const angularTerms = [
+      'Component', 'Service', 'Directive', 'Pipe', 'Module',
+      'Injectable', 'ViewChild', 'Input', 'Output', 'EventEmitter',
+      'Observable', 'Subscription', 'Router', 'ActivatedRoute',
+      'FormControl', 'FormGroup', 'Validators'
+    ];
+
+    angularTerms.forEach(term => {
+      const regex = new RegExp(`\\b${term}\\b`, 'g');
+      processedContent = processedContent.replace(regex, 
+        `<span data-vocabulary-term="${term.toLowerCase()}" class="vocabulary-term">${term}</span>`
+      );
+    });
+
+    return processedContent;
+  }
+
+  /**
+   * Build hierarchical TOC structure from flat headings
+   * @param headings Flat array of headings
+   * @returns Hierarchical TOC structure
+   */
+  private buildTOCHierarchy(headings: ContentHeading[]): TOCSection[] {
+    const toc: TOCSection[] = [];
+    const stack: TOCSection[] = [];
+
+    headings.forEach((heading, index) => {
+      const section: TOCSection = {
+        id: heading.id,
+        title: heading.text,
+        level: heading.level,
+        children: [],
+        startPosition: index
+      };
+
+      // Find the correct parent level
+      while (stack.length > 0 && stack[stack.length - 1].level >= heading.level) {
+        stack.pop();
+      }
+
+      if (stack.length === 0) {
+        toc.push(section);
+      } else {
+        stack[stack.length - 1].children.push(section);
+      }
+
+      stack.push(section);
+    });
+
+    return toc;
+  }
+
+  /**
+   * Extract title from content if not in frontmatter
+   * @param content Markdown content
+   * @returns Extracted title or null
+   */
+  private extractTitleFromContent(content: string): string | null {
+    const firstHeading = content.match(/^#\s+(.+)$/m);
+    return firstHeading ? firstHeading[1].trim() : null;
+  }
+
+  /**
+   * Map skill level from various formats
+   * @param level Level from frontmatter
+   * @returns Standardized skill level
+   */
+  private mapSkillLevel(level?: string): SkillLevel {
+    if (!level) return SkillLevel.FUNDAMENTALS;
+    
+    const normalizedLevel = level.toLowerCase();
+    
+    if (normalizedLevel.includes('fundamental') || normalizedLevel.includes('beginner') || normalizedLevel.includes('basic')) {
+      return SkillLevel.FUNDAMENTALS;
+    }
+    if (normalizedLevel.includes('intermediate') || normalizedLevel.includes('medium')) {
+      return SkillLevel.INTERMEDIATE;
+    }
+    if (normalizedLevel.includes('advanced') || normalizedLevel.includes('expert')) {
+      return SkillLevel.ADVANCED;
+    }
+    if (normalizedLevel.includes('expert') || normalizedLevel.includes('master')) {
+      return SkillLevel.EXPERT;
+    }
+
+    return SkillLevel.FUNDAMENTALS;
+  }
+
+  /**
+   * Extract category from article ID or frontmatter
+   * @param articleId Article identifier
+   * @param frontmatterCategory Category from frontmatter
+   * @returns Article category
+   */
+  private extractCategory(articleId: string, frontmatterCategory?: string): string {
+    if (frontmatterCategory) return frontmatterCategory;
+    
+    // Extract from path structure (e.g., "fundamentals/introduction-to-angular")
+    const pathParts = articleId.split('/');
+    return pathParts.length > 1 ? pathParts[0] : 'general';
+  }
+
+  /**
+   * Count words in text content
+   * @param content Text content
+   * @returns Word count
+   */
+  private countWords(content: string): number {
+    // Remove code blocks and inline code for more accurate count
+    const textOnly = content
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/`[^`]+`/g, '')        // Remove inline code
+      .replace(/[#*_[\]()]/g, ' ')    // Remove markdown formatting
+      .replace(/\s+/g, ' ')           // Normalize whitespace
+      .trim();
+
+    return textOnly ? textOnly.split(/\s+/).length : 0;
+  }
+
+  /**
+   * Check if code blocks contain interactive examples
+   * @param codeBlocks Array of code blocks
+   * @returns True if interactive examples found
+   */
+  private hasInteractiveExamples(codeBlocks: CodeBlock[]): boolean {
+    return codeBlocks.some(block => 
+      block.code.includes('@Component') ||
+      block.code.includes('ngOnInit') ||
+      block.code.includes('constructor') ||
+      block.title?.toLowerCase().includes('example') ||
+      block.title?.toLowerCase().includes('demo')
+    );
+  }
+
+  /**
+   * Generate content hash for change detection
+   * @param content Content to hash
+   * @returns Content hash
+   */
+  private generateContentHash(content: string): string {
+    // Simple hash function for content change detection
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
   }
 }
