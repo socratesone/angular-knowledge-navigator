@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/concepts/fundamentals',
+    redirectTo: '/concepts/fundamentals/introduction-to-angular',
     pathMatch: 'full'
   },
   {
