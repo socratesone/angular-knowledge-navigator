@@ -89,11 +89,31 @@ export class MarkdownProcessorService {
     // Configure renderer to extract metadata
     const renderer = new marked.Renderer();
     
-    // Override heading renderer to collect headings
+    // Keep track of used anchor IDs to ensure uniqueness
+    const usedAnchorIds = new Set<string>();
+
+    // Override heading renderer to collect headings with unique anchor IDs
     renderer.heading = (text: string, level: number): string => {
-      const id = this.slugify(text);
-      headings.push({ id, text, level });
-      return `<h${level} id="${id}">${text}</h${level}>`;
+      const baseId = this.slugify(text);
+      let uniqueId = baseId;
+      let counter = 1;
+      
+      // Ensure unique ID
+      while (usedAnchorIds.has(uniqueId)) {
+        counter++;
+        uniqueId = `${baseId}-${counter}`;
+      }
+      
+      usedAnchorIds.add(uniqueId);
+      headings.push({ id: uniqueId, text, level });
+      
+      // Enhanced heading with accessibility and navigation attributes
+      return `<h${level} id="${uniqueId}" class="content-heading level-${level}" tabindex="-1" data-toc-anchor="${uniqueId}">
+        <a href="#${uniqueId}" class="heading-anchor" aria-label="Link to ${text}" title="Link to this section">
+          <span class="heading-text">${text}</span>
+          <span class="anchor-icon" aria-hidden="true">#</span>
+        </a>
+      </h${level}>`;
     };
 
     // Override code renderer to collect code blocks and apply Prism.js highlighting
@@ -544,12 +564,12 @@ export class MarkdownProcessorService {
       lastUpdated: frontmatter?.lastUpdated ? new Date(frontmatter.lastUpdated) : new Date(),
       contentHash: this.generateContentHash(content),
       // Additional metadata from frontmatter
-      description: frontmatter?.description || this.extractDescription(content),
-      author: frontmatter?.author,
-      version: frontmatter?.version,
-      difficulty: frontmatter?.difficulty || this.calculateDifficulty(codeBlocks.length, headings.length),
-      prerequisites: frontmatter?.prerequisites || [],
-      estimatedTime: frontmatter?.estimatedReadingTime || enhancedReadingTime
+      description: frontmatter?.['description'] || this.extractDescription(content),
+      author: frontmatter?.['author'],
+      version: frontmatter?.['version'],
+      difficulty: frontmatter?.['difficulty'] || this.calculateDifficulty(codeBlocks.length, headings.length),
+      prerequisites: frontmatter?.['prerequisites'] || [],
+      estimatedTime: frontmatter?.['estimatedReadingTime'] || enhancedReadingTime
     };
   }
 

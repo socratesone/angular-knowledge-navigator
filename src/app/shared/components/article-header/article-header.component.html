@@ -123,15 +123,18 @@
             <ul class="toc-list">
               <li *ngFor="let section of tocSections(); trackBy: trackTOCSection"
                   class="toc-item"
-                  [class]="getTOCIndentClass(section.level)">
+                  [class]="getTOCIndentClass(section.level)"
+                  [class.active]="isSectionActive(section.id)">
                 
-                <button class="toc-link"
+                <button [class]="getSectionCSSClass(section.id)"
                        [class.hovered]="isSectionHovered(section.id)"
+                       [class.current-section]="isSectionActive(section.id)"
                        (click)="onTOCSectionClick(section)"
                        (mouseenter)="onSectionHover(section.id)"
                        (mouseleave)="onSectionHover(null)"
                        [attr.aria-label]="'Navigate to ' + section.title"
-                       [attr.title]="section.title">
+                       [attr.title]="section.title"
+                       [attr.aria-current]="isSectionActive(section.id) ? 'location' : null">
                   
                   <mat-icon class="toc-icon" 
                            [attr.aria-hidden]="true">
@@ -153,15 +156,18 @@
                     class="toc-nested">
                   <li *ngFor="let child of section.children; trackBy: trackTOCSection"
                       class="toc-item nested"
-                      [class]="getTOCIndentClass(child.level)">
+                      [class]="getTOCIndentClass(child.level)"
+                      [class.active]="isSectionActive(child.id)">
                     
-                    <button class="toc-link nested"
+                    <button [class]="getSectionCSSClass(child.id) + ' nested'"
                            [class.hovered]="isSectionHovered(child.id)"
+                           [class.current-section]="isSectionActive(child.id)"
                            (click)="onTOCSectionClick(child)"
                            (mouseenter)="onSectionHover(child.id)"
                            (mouseleave)="onSectionHover(null)"
                            [attr.aria-label]="'Navigate to ' + child.title"
-                           [attr.title]="child.title">
+                           [attr.title]="child.title"
+                           [attr.aria-current]="isSectionActive(child.id) ? 'location' : null">
                       
                       <mat-icon class="toc-icon nested" 
                                [attr.aria-hidden]="true">

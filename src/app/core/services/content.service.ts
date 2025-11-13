@@ -426,6 +426,155 @@ export class ContentService {
   }
 
   /**
+   * Generate table of contents from current content
+   * @returns Observable with TOC sections
+   */
+  generateTOC(): Observable<any[]> {
+    const currentState = this.currentContentSubject.value;
+    if (!currentState.markdown) {
+      return of([]);
+    }
+
+    const toc = this.markdownProcessor.generateTOCFromContent(currentState.markdown);
+    return of(toc);
+  }
+
+  /**
+   * Extract headings with enhanced metadata for TOC generation
+   * @param topicId Topic identifier
+   * @returns Observable with enhanced heading data
+   */
+  extractEnhancedHeadings(topicId: string): Observable<any[]> {
+    return this.loadContent(topicId).pipe(
+      map(state => {
+        if (!state.markdown) return [];
+        
+        const headings = this.markdownProcessor.extractHeadings(state.markdown);
+        return headings.map((heading, index) => ({
+          ...heading,
+          index,
+          estimatedPosition: this.estimateHeadingPosition(state.markdown, heading.text),
+          sectionLength: this.calculateSectionLength(state.markdown, heading.text, index, headings),
+          hasCodeExamples: this.sectionHasCodeExamples(state.markdown, heading.text, index, headings),
+          complexity: this.calculateSectionComplexity(state.markdown, heading.text, index, headings)
+        }));
+      })
+    );
+  }
+
+  /**
+   * Validate TOC anchor IDs in content
+   * @param content Markdown content
+   * @returns Array of missing or invalid anchor IDs
+   */
+  validateTOCAnchors(content: string): string[] {
+    const headings = this.markdownProcessor.extractHeadings(content);
+    const processedContent = this.markdownProcessor.processMarkdown(content);
+    
+    // Extract HTML string from SafeHtml for validation
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = processedContent.html.toString();
+    const htmlString = tempDiv.innerHTML;
+    
+    const missingAnchors: string[] = [];
+    
+    headings.forEach(heading => {
+      const expectedId = this.markdownProcessor.generateAnchorId(heading.text);
+      if (!htmlString.includes(`id="${expectedId}"`)) {
+        missingAnchors.push(expectedId);
+      }
+    });
+    
+    return missingAnchors;
+  }
+
+  /**
+   * Estimate heading position as percentage of document
+   */
+  private estimateHeadingPosition(content: string, headingText: string): number {
+    const headingIndex = content.indexOf(headingText);
+    if (headingIndex === -1) return 0;
+    
+    return Math.round((headingIndex / content.length) * 100);
+  }
+
+  /**
+   * Calculate section length (characters between this heading and next)
+   */
+  private calculateSectionLength(content: string, headingText: string, index: number, allHeadings: any[]): number {
+    const currentHeadingIndex = content.indexOf(headingText);
+    if (currentHeadingIndex === -1) return 0;
+    
+    // Find next heading
+    const nextHeading = allHeadings[index + 1];
+    if (!nextHeading) {
+      // Last section - measure to end of content
+      return content.length - currentHeadingIndex;
+    }
+    
+    const nextHeadingIndex = content.indexOf(nextHeading.text, currentHeadingIndex + 1);
+    return nextHeadingIndex - currentHeadingIndex;
+  }
+
+  /**
+   * Check if section contains code examples
+   */
+  private sectionHasCodeExamples(content: string, headingText: string, index: number, allHeadings: any[]): boolean {
+    const currentHeadingIndex = content.indexOf(headingText);
+    if (currentHeadingIndex === -1) return false;
+    
+    // Find next heading to determine section bounds
+    const nextHeading = allHeadings[index + 1];
+    let sectionEnd = content.length;
+    
+    if (nextHeading) {
+      const nextHeadingIndex = content.indexOf(nextHeading.text, currentHeadingIndex + 1);
+      if (nextHeadingIndex !== -1) {
+        sectionEnd = nextHeadingIndex;
+      }
+    }
+    
+    const sectionContent = content.substring(currentHeadingIndex, sectionEnd);
+    return sectionContent.includes('```') || sectionContent.includes('`');
+  }
+
+  /**
+   * Calculate section complexity score
+   */
+  private calculateSectionComplexity(content: string, headingText: string, index: number, allHeadings: any[]): number {
+    const currentHeadingIndex = content.indexOf(headingText);
+    if (currentHeadingIndex === -1) return 1;
+    
+    // Find section bounds
+    const nextHeading = allHeadings[index + 1];
+    let sectionEnd = content.length;
+    
+    if (nextHeading) {
+      const nextHeadingIndex = content.indexOf(nextHeading.text, currentHeadingIndex + 1);
+      if (nextHeadingIndex !== -1) {
+        sectionEnd = nextHeadingIndex;
+      }
+    }
+    
+    const sectionContent = content.substring(currentHeadingIndex, sectionEnd);
+    
+    // Count complexity indicators
+    const codeBlocks = (sectionContent.match(/```[\s\S]*?```/g) || []).length;
+    const inlineCode = (sectionContent.match(/`[^`]+`/g) || []).length;
+    const links = (sectionContent.match(/\[[^\]]*\]\([^)]+\)/g) || []).length;
+    const lists = (sectionContent.match(/^\s*[-*+]\s/gm) || []).length;
+    
+    // Simple complexity scoring
+    let complexity = 1;
+    complexity += codeBlocks * 2; // Code blocks add significant complexity
+    complexity += Math.floor(inlineCode / 3); // Inline code adds some complexity
+    complexity += Math.floor(links / 5); // Links add minimal complexity
+    complexity += Math.floor(lists / 10); // Lists add minimal complexity
+    
+    return Math.min(5, complexity); // Cap at 5
+  }
+
+  /**
    * Calculate enhanced reading time with code examples and complexity factors
    * @param markdown Raw markdown content
    * @param complexity Optional complexity multiplier (1.0 = average)

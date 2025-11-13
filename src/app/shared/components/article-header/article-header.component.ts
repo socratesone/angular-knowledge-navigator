@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ArticleMetadata, TOCSection, SkillLevel } from '../../models/vocabulary.model';
+import { 
+  scrollToAnchor, 
+  getCurrentAnchor, 
+  getCurrentVisibleSection,
+  isElementInViewport,
+  ScrollToAnchorOptions 
+} from '../../utils/anchor-utils';
 
 export interface TOCSelectionEvent {
   section: TOCSection;
@@ -28,19 +35,25 @@ export interface TOCSelectionEvent {
   styleUrls: ['./article-header.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ArticleHeaderComponent {
+export class ArticleHeaderComponent implements OnInit, OnDestroy {
   @Input() metadata: ArticleMetadata | null = null;
   @Input() showTOC: boolean = true;
   @Input() showReadingTime: boolean = true;
   @Input() showLevel: boolean = true;
   @Input() isLoading: boolean = false;
+  @Input() scrollOffset: number = 80; // Offset for fixed headers
+  @Input() enableAutoHighlight: boolean = true; // Auto-highlight current section
 
   @Output() tocSectionSelected = new EventEmitter<TOCSelectionEvent>();
   @Output() tocToggled = new EventEmitter<boolean>();
+  @Output() sectionInView = new EventEmitter<string | null>();
 
   // Internal state
   private readonly tocExpanded = signal<boolean>(false);
   private readonly hoveredSection = signal<string | null>(null);
+  private readonly currentSection = signal<string | null>(null);
+  private scrollListener: (() => void) | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   // Computed properties
   readonly hasTOC = computed(() => {
@@ -136,17 +149,47 @@ export class ArticleHeaderComponent {
     this.tocToggled.emit(newState);
   }
 
+  ngOnInit(): void {
+    this.initializeScrollTracking();
+    this.checkInitialSection();
+  }
+
+  ngOnDestroy(): void {
+    this.cleanupScrollTracking();
+  }
+
   /**
-   * Handle TOC section selection
+   * Handle TOC section selection with smooth scrolling
    */
   onTOCSectionClick(section: TOCSection): void {
+    const scrollOptions: ScrollToAnchorOptions = {
+      offset: this.scrollOffset,
+      behavior: 'smooth',
+      block: 'start',
+      updateUrl: true,
+      focusTarget: true
+    };
+
+    // Perform smooth scroll
+    scrollToAnchor(section.id, scrollOptions);
+
+    // Update current section
+    this.currentSection.set(section.id);
+
+    // Emit events
     const event: TOCSelectionEvent = {
       section,
       sectionId: section.id
     };
     
     this.tocSectionSelected.emit(event);
-    this.tocExpanded.set(false); // Close dropdown after selection
+    this.sectionInView.emit(section.id);
+    
+    // Close dropdown after selection
+    this.tocExpanded.set(false);
+
+    // Track navigation for analytics
+    this.trackTOCNavigation(section);
   }
 
   /**
@@ -230,5 +273,164 @@ export class ArticleHeaderComponent {
    */
   trackTOCSection(index: number, section: TOCSection): string {
     return section.id;
+  }
+
+  /**
+   * Initialize scroll tracking for automatic section highlighting
+   */
+  private initializeScrollTracking(): void {
+    if (!this.enableAutoHighlight) return;
+
+    this.scrollListener = this.throttle(() => {
+      this.updateCurrentSection();
+    }, 100);
+
+    window.addEventListener('scroll', this.scrollListener);
+    
+    // Also track viewport changes
+    this.resizeObserver = new ResizeObserver(() => {
+      this.updateCurrentSection();
+    });
+    
+    if (document.body) {
+      this.resizeObserver.observe(document.body);
+    }
+  }
+
+  /**
+   * Cleanup scroll event listeners
+   */
+  private cleanupScrollTracking(): void {
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener);
+      this.scrollListener = null;
+    }
+
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+  }
+
+  /**
+   * Check initial section based on URL hash
+   */
+  private checkInitialSection(): void {
+    const currentAnchor = getCurrentAnchor();
+    if (currentAnchor && this.isSectionInTOC(currentAnchor)) {
+      this.currentSection.set(currentAnchor);
+      this.sectionInView.emit(currentAnchor);
+    }
+  }
+
+  /**
+   * Update currently visible section
+   */
+  private updateCurrentSection(): void {
+    const sections = this.tocSections();
+    if (sections.length === 0) return;
+
+    const anchorIds = sections.map(section => section.id);
+    const visibleSection = getCurrentVisibleSection(anchorIds, this.scrollOffset);
+    
+    if (visibleSection && visibleSection !== this.currentSection()) {
+      this.currentSection.set(visibleSection);
+      this.sectionInView.emit(visibleSection);
+    }
+  }
+
+  /**
+   * Check if section ID exists in current TOC
+   */
+  private isSectionInTOC(sectionId: string): boolean {
+    const sections = this.tocSections();
+    return sections.some(section => 
+      section.id === sectionId || 
+      (section.children && section.children.some(child => child.id === sectionId))
+    );
+  }
+
+  /**
+   * Track TOC navigation for analytics
+   */
+  private trackTOCNavigation(section: TOCSection): void {
+    // This could be enhanced to send analytics events
+    console.log('TOC Navigation:', {
+      sectionId: section.id,
+      sectionTitle: section.title,
+      sectionLevel: section.level,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Throttle function to limit scroll event frequency
+   */
+  private throttle<T extends (...args: any[]) => void>(
+    func: T,
+    delay: number
+  ): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let lastExecTime = 0;
+    
+    return (...args: Parameters<T>) => {
+      const currentTime = Date.now();
+      
+      if (currentTime - lastExecTime > delay) {
+        func(...args);
+        lastExecTime = currentTime;
+      } else {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        
+        timeoutId = setTimeout(() => {
+          func(...args);
+          lastExecTime = Date.now();
+        }, delay - (currentTime - lastExecTime));
+      }
+    };
+  }
+
+  /**
+   * Get CSS class for active/current section
+   */
+  getSectionCSSClass(sectionId: string): string {
+    const classes = ['toc-link'];
+    
+    if (this.currentSection() === sectionId) {
+      classes.push('current-section');
+    }
+    
+    if (this.hoveredSection() === sectionId) {
+      classes.push('hovered');
+    }
+    
+    return classes.join(' ');
+  }
+
+  /**
+   * Check if section is currently active
+   */
+  isSectionActive(sectionId: string): boolean {
+    return this.currentSection() === sectionId;
+  }
+
+  /**
+   * Get section progress (estimated scroll position)
+   */
+  getSectionProgress(sectionId: string): number {
+    const element = document.getElementById(sectionId);
+    if (!element) return 0;
+
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate how much of the section is visible
+    const visibleTop = Math.max(0, -rect.top);
+    const visibleBottom = Math.min(rect.height, viewportHeight - rect.top);
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+    
+    return rect.height > 0 ? (visibleHeight / rect.height) * 100 : 0;
   }
 }

@@ -55,7 +55,8 @@ import { CaveatsComponent } from './caveats.component';
           [metadata]="articleMetadata()"
           [isLoading]="contentState().loadingStatus === LoadingStatus.Loading"
           (tocSectionSelected)="onTOCSectionSelected($event)"
-          (tocToggled)="onTOCToggled($event)">
+          (tocToggled)="onTOCToggled($event)"
+          (sectionInView)="onSectionInView($event)">
         </app-article-header>
         
         <!-- Prerequisites Warning -->
@@ -373,20 +374,113 @@ export class ContentViewerComponent implements OnInit {
    * Handle TOC section selection from ArticleHeaderComponent
    */
   onTOCSectionSelected(event: TOCSelectionEvent): void {
-    const targetElement = document.getElementById(event.sectionId);
-    if (targetElement) {
-      // Smooth scroll to the target section
-      targetElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'nearest'
-      });
+    this.navigateToSection(event.sectionId, event.section.title);
+  }
 
-      // Update URL hash without triggering navigation
-      window.history.replaceState(null, '', `#${event.sectionId}`);
+  /**
+   * Navigate to a specific section with enhanced handling
+   */
+  private navigateToSection(sectionId: string, sectionTitle?: string): void {
+    const targetElement = document.getElementById(sectionId);
+    
+    if (!targetElement) {
+      console.warn(`Section with ID "${sectionId}" not found`);
+      return;
+    }
+
+    // Calculate offset for fixed headers
+    const headerOffset = 80;
+    const elementPosition = targetElement.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    // Smooth scroll with custom implementation for better control
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+
+    // Update URL hash without triggering navigation
+    this.updateUrlHash(sectionId);
+    
+    // Focus the target element for accessibility
+    this.focusSection(targetElement);
+    
+    // Track navigation for analytics and user behavior
+    this.trackSectionNavigation(sectionId, sectionTitle);
+    
+    // Update any visual indicators
+    this.highlightCurrentSection(sectionId);
+  }
+
+  /**
+   * Update URL hash without triggering page navigation
+   */
+  private updateUrlHash(sectionId: string): void {
+    try {
+      const url = new URL(window.location.href);
+      url.hash = sectionId;
+      window.history.replaceState(null, '', url.toString());
+    } catch (error) {
+      console.warn('Failed to update URL hash:', error);
+    }
+  }
+
+  /**
+   * Focus section for accessibility
+   */
+  private focusSection(element: HTMLElement): void {
+    // Set tabindex temporarily if not focusable
+    const originalTabIndex = element.getAttribute('tabindex');
+    
+    if (!element.hasAttribute('tabindex')) {
+      element.setAttribute('tabindex', '-1');
+    }
+    
+    // Focus with a slight delay to ensure scroll is complete
+    setTimeout(() => {
+      element.focus({ preventScroll: true });
       
-      // Optional: Track TOC navigation for analytics
-      console.log('TOC navigation:', event.section.title);
+      // Restore original tabindex after focus
+      if (originalTabIndex === null) {
+        element.removeAttribute('tabindex');
+      } else {
+        element.setAttribute('tabindex', originalTabIndex);
+      }
+    }, 300);
+  }
+
+  /**
+   * Track section navigation for analytics
+   */
+  private trackSectionNavigation(sectionId: string, sectionTitle?: string): void {
+    const navigationData = {
+      sectionId,
+      sectionTitle: sectionTitle || 'Unknown Section',
+      articleId: this.currentTopicId(),
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      referrer: document.referrer
+    };
+
+    // Log for debugging (replace with actual analytics in production)
+    console.log('TOC Navigation:', navigationData);
+
+    // Example: Send to analytics service
+    // this.analyticsService.trackEvent('toc_navigation', navigationData);
+  }
+
+  /**
+   * Highlight current section visually
+   */
+  private highlightCurrentSection(sectionId: string): void {
+    // Remove previous highlights
+    document.querySelectorAll('.content-heading.active-section')
+      .forEach(el => el.classList.remove('active-section'));
+
+    // Add highlight to current section
+    const currentSection = document.getElementById(sectionId);
+    if (currentSection) {
+      currentSection.classList.add('active-section');
     }
   }
 
@@ -395,7 +489,63 @@ export class ContentViewerComponent implements OnInit {
    */
   onTOCToggled(expanded: boolean): void {
     console.log('TOC toggled:', expanded);
-    // Optional: Track TOC usage for analytics
+    
+    // Track TOC usage for analytics
+    this.trackTOCUsage(expanded);
+  }
+
+  /**
+   * Handle section coming into view (from ArticleHeaderComponent)
+   */
+  onSectionInView(sectionId: string | null): void {
+    if (sectionId) {
+      this.highlightCurrentSection(sectionId);
+      this.updateUrlHash(sectionId);
+    }
+  }
+
+  /**
+   * Track TOC usage patterns
+   */
+  private trackTOCUsage(expanded: boolean): void {
+    const usageData = {
+      action: expanded ? 'toc_expanded' : 'toc_collapsed',
+      articleId: this.currentTopicId(),
+      timestamp: new Date().toISOString(),
+      sectionCount: this.articleMetadata()?.tableOfContents?.length || 0
+    };
+
+    console.log('TOC Usage:', usageData);
+  }
+
+  /**
+   * Initialize section intersection observer for auto-highlighting
+   */
+  private initializeSectionObserver(): void {
+    // This would be called if we want additional intersection-based highlighting
+    const options = {
+      root: null,
+      rootMargin: '-80px 0px -60% 0px', // Account for header offset
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.id;
+          if (sectionId) {
+            this.highlightCurrentSection(sectionId);
+          }
+        }
+      });
+    }, options);
+
+    // Observe all headings
+    setTimeout(() => {
+      document.querySelectorAll('.content-heading[id]').forEach(heading => {
+        observer.observe(heading);
+      });
+    }, 1000); // Delay to ensure content is rendered
   }
 
   /**

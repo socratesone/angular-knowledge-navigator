@@ -99,6 +99,13 @@ export interface ArticleMetadata {
   nextTopic?: string;           // Next recommended article ID
   lastUpdated: Date;
   contentHash: string;          // Hash for change detection
+  // Extended metadata from frontmatter
+  description?: string;         // Article description
+  author?: string;              // Author name
+  version?: string;             // Version number
+  difficulty?: number;          // Difficulty score (1-5)
+  prerequisites?: string[];     // Required prior knowledge
+  estimatedTime?: number;       // Manual time estimate override
 }
 
 export interface TOCSection {

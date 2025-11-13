@@ -290,19 +290,69 @@
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(-8px);
-  transition: all 0.2s ease-in-out;
+  transform: translateY(-8px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform-origin: top center;
 
   &.expanded {
     max-height: 400px;
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    
+    // Animate items in sequence
+    .toc-item {
+      animation: toc-item-enter 0.2s ease-out forwards;
+      opacity: 0;
+      transform: translateX(-16px);
+      
+      @for $i from 1 through 10 {
+        &:nth-child(#{$i}) {
+          animation-delay: #{$i * 0.03}s;
+        }
+      }
+    }
   }
 
   @media (min-width: 1024px) {
     right: auto;
     min-width: 320px;
   }
+}
+
+// Animation for TOC items appearing
+@keyframes toc-item-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Loading animation for TOC
+.toc-loading {
+  padding: 16px;
+  text-align: center;
+  color: var(--secondary-text-color, #757575);
+  
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid transparent;
+    border-top-color: var(--primary-color, #1976d2);
+    border-radius: 50%;
+    animation: toc-loading-spin 1s linear infinite;
+  }
+}
+
+@keyframes toc-loading-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .toc-content {
@@ -352,6 +402,7 @@
 // TOC Items
 .toc-item {
   margin: 0;
+  position: relative;
 
   &.toc-indent-1 { --indent-level: 0px; }
   &.toc-indent-2 { --indent-level: 16px; }
@@ -362,6 +413,36 @@
 
   &.nested {
     --indent-level: calc(var(--indent-level, 0px) + 16px);
+  }
+
+  // Active indicator
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary-color, #1976d2);
+    opacity: 0;
+    transform: scaleY(0);
+    transition: all 0.2s ease-in-out;
+    border-radius: 0 2px 2px 0;
+  }
+
+  &.active::before {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  // Hover effect with subtle background
+  &:hover {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(25, 118, 210, 0.05),
+      transparent
+    );
   }
 }
 
@@ -381,18 +462,60 @@
   text-decoration: none;
   font-size: 0.875rem;
   line-height: 1.4;
+  position: relative;
 
   &:hover,
   &.hovered {
     background: var(--hover-color, #f5f5f5);
     color: var(--primary-color, #1976d2);
     padding-left: calc(20px + var(--indent-level, 0px));
+    transform: translateX(2px);
   }
 
   &:focus {
     outline: 2px solid var(--primary-color, #1976d2);
     outline-offset: -2px;
     background: var(--hover-color, #f5f5f5);
+    z-index: 1;
+  }
+
+  &:active {
+    transform: translateX(1px);
+    background: var(--primary-color, #1976d2);
+    color: white;
+    
+    .toc-level-indicator {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+
+  // Current section highlighting
+  &.current-section {
+    background: rgba(25, 118, 210, 0.1);
+    color: var(--primary-color, #1976d2);
+    font-weight: 600;
+    
+    .toc-icon {
+      color: var(--primary-color, #1976d2);
+    }
+    
+    .toc-level-indicator {
+      background: var(--primary-color, #1976d2);
+      color: white;
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 4px;
+      background: var(--primary-color, #1976d2);
+      border-radius: 50%;
+    }
   }
 
   .toc-icon {
