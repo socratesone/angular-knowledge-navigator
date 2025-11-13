@@ -10,10 +10,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { ContentService } from '../../core/services/content.service';
 import { NavigationService } from '../../core/services/navigation.service';
+import { MarkdownProcessorService } from '../../core/services/markdown-processor.service';
 import { SearchService } from '../../core/services/search.service';
 import { ContentState, LoadingStatus, BestPractice, Caveat, CodeExample } from '../../shared/models';
+import { ArticleMetadata, TOCSection } from '../../shared/models/vocabulary.model';
 import { HighlightDirective, AdvancedHighlightDirective } from '../../shared/directives';
 import { CodeHighlighterComponent } from '../../shared/components/code-highlighter.component';
+import { ArticleHeaderComponent, TOCSelectionEvent } from '../../shared/components/article-header/article-header.component';
 import { BestPracticesComponent } from './best-practices.component';
 import { CaveatsComponent } from './caveats.component';
 
@@ -33,6 +36,7 @@ import { CaveatsComponent } from './caveats.component';
     HighlightDirective,
     AdvancedHighlightDirective,
     CodeHighlighterComponent,
+    ArticleHeaderComponent,
     BestPracticesComponent,
     CaveatsComponent
   ],
@@ -46,6 +50,13 @@ import { CaveatsComponent } from './caveats.component';
       }
       
       @if (contentState().loadingStatus === LoadingStatus.Loaded) {
+        <!-- Article Header -->
+        <app-article-header
+          [metadata]="articleMetadata()"
+          [isLoading]="contentState().loadingStatus === LoadingStatus.Loading"
+          (tocSectionSelected)="onTOCSectionSelected($event)"
+          (tocToggled)="onTOCToggled($event)">
+        </app-article-header>
         
         <!-- Prerequisites Warning -->
         @if (hasUnmetPrerequisites()) {
@@ -260,6 +271,7 @@ export class ContentViewerComponent implements OnInit {
 
   // Additional reactive state for enhanced features
   readonly currentTopicId = signal<string>('');
+  readonly articleMetadata = signal<ArticleMetadata | null>(null);
   readonly prerequisites = signal<string[]>([]);
   readonly relatedTopics = signal<string[]>([]);
   readonly codeExamples = signal<CodeExample[]>([]);
@@ -269,7 +281,8 @@ export class ContentViewerComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private contentService: ContentService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private markdownProcessor: MarkdownProcessorService
   ) {}
 
   ngOnInit(): void {
@@ -305,11 +318,26 @@ export class ContentViewerComponent implements OnInit {
     this.contentService.loadContent(topicId).subscribe({
       next: (state) => {
         console.log('Content loaded:', state);
+        // Extract article metadata after content is loaded
+        this.extractArticleMetadata(state);
       },
       error: (error) => {
         console.error('Failed to load content:', error);
       }
     });
+  }
+
+  /**
+   * Extract article metadata from loaded content
+   */
+  private extractArticleMetadata(contentState: ContentState): void {
+    if (contentState.markdown && contentState.topicId) {
+      const metadata = this.markdownProcessor.extractArticleMetadata(
+        contentState.markdown, 
+        contentState.topicId
+      );
+      this.articleMetadata.set(metadata);
+    }
   }
 
   /**
@@ -327,6 +355,7 @@ export class ContentViewerComponent implements OnInit {
       next: (state) => {
         this.currentTopicId.set(state.topicId);
         this.loadEnhancedData(state.topicId);
+        this.extractArticleMetadata(state);
         console.log('Default content loaded:', state);
       },
       error: (error) => {
@@ -338,6 +367,35 @@ export class ContentViewerComponent implements OnInit {
         });
       }
     });
+  }
+
+  /**
+   * Handle TOC section selection from ArticleHeaderComponent
+   */
+  onTOCSectionSelected(event: TOCSelectionEvent): void {
+    const targetElement = document.getElementById(event.sectionId);
+    if (targetElement) {
+      // Smooth scroll to the target section
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+
+      // Update URL hash without triggering navigation
+      window.history.replaceState(null, '', `#${event.sectionId}`);
+      
+      // Optional: Track TOC navigation for analytics
+      console.log('TOC navigation:', event.section.title);
+    }
+  }
+
+  /**
+   * Handle TOC dropdown toggle
+   */
+  onTOCToggled(expanded: boolean): void {
+    console.log('TOC toggled:', expanded);
+    // Optional: Track TOC usage for analytics
   }
 
   /**

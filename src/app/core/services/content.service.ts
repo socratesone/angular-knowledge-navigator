@@ -426,6 +426,77 @@ export class ContentService {
   }
 
   /**
+   * Calculate enhanced reading time with code examples and complexity factors
+   * @param markdown Raw markdown content
+   * @param complexity Optional complexity multiplier (1.0 = average)
+   * @returns Reading time in minutes
+   */
+  calculateEnhancedReadingTime(markdown: string, complexity: number = 1.0): number {
+    if (!markdown) return 0;
+
+    // Remove frontmatter for accurate word count
+    const contentWithoutFrontmatter = markdown.replace(/^---\n[\s\S]*?\n---\n/, '');
+    
+    // Extract different content types
+    const codeBlocks = (contentWithoutFrontmatter.match(/```[\s\S]*?```/g) || []).length;
+    const inlineCode = (contentWithoutFrontmatter.match(/`[^`]+`/g) || []).length;
+    const images = (contentWithoutFrontmatter.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+    const links = (contentWithoutFrontmatter.match(/\[[^\]]*\]\([^)]+\)/g) || []).length;
+    const lists = (contentWithoutFrontmatter.match(/^\s*[-*+]\s/gm) || []).length;
+    const tables = (contentWithoutFrontmatter.match(/\|.*\|/g) || []).length / 2; // Rough table count
+    
+    // Remove code blocks and other non-readable content for word count
+    const textContent = contentWithoutFrontmatter
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/`[^`]+`/g, '')        // Remove inline code
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove images
+      .replace(/\[[^\]]*\]\([^)]+\)/g, '') // Remove links
+      .replace(/[#*_`\[\]()]/g, ' ')   // Remove markdown formatting
+      .replace(/\s+/g, ' ')           // Normalize whitespace
+      .trim();
+
+    const wordCount = textContent ? textContent.split(/\s+/).length : 0;
+    
+    // Base reading time calculation (200 words per minute)
+    const baseReadingTime = wordCount / 200;
+    
+    // Additional time for different content types
+    const codeReadingTime = codeBlocks * 1.5; // 1.5 minutes per code block
+    const inlineCodeTime = inlineCode * 0.1; // 6 seconds per inline code
+    const imageTime = images * 0.5; // 30 seconds per image
+    const listTime = lists * 0.05; // 3 seconds per list item
+    const tableTime = tables * 0.3; // 18 seconds per table row
+    
+    // Calculate total time
+    const totalTime = baseReadingTime + codeReadingTime + inlineCodeTime + 
+                     imageTime + listTime + tableTime;
+    
+    // Apply complexity multiplier
+    const adjustedTime = totalTime * complexity;
+    
+    // Round to nearest minute, minimum 1 minute
+    return Math.max(1, Math.round(adjustedTime));
+  }
+
+  /**
+   * Get reading time with difficulty-based adjustment
+   * @param markdown Content to analyze
+   * @param skillLevel Article skill level
+   * @returns Adjusted reading time in minutes
+   */
+  getAdjustedReadingTime(markdown: string, skillLevel?: string): number {
+    const complexityMultipliers = {
+      'fundamentals': 0.8,  // Easier to read
+      'intermediate': 1.0,  // Standard
+      'advanced': 1.3,      // More complex
+      'expert': 1.5         // Most complex
+    };
+    
+    const multiplier = complexityMultipliers[skillLevel as keyof typeof complexityMultipliers] || 1.0;
+    return this.calculateEnhancedReadingTime(markdown, multiplier);
+  }
+
+  /**
    * Load content with enhanced metadata extraction
    * @param topicId Topic identifier
    * @returns Observable with content and metadata

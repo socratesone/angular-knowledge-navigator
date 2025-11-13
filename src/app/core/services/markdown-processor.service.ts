@@ -525,22 +525,143 @@ export class MarkdownProcessorService {
     const wordCount = this.countWords(content);
     const readingTime = this.calculateReadingTime(content);
 
+    // Enhanced metadata extraction with advanced reading time calculation
+    const enhancedReadingTime = this.calculateEnhancedReadingTime(content, this.getComplexityMultiplier(frontmatter?.skillLevel));
+
     return {
       id: articleId,
       title: frontmatter?.title || this.extractTitleFromContent(content) || 'Untitled',
       level: this.mapSkillLevel(frontmatter?.skillLevel || frontmatter?.category),
       category: this.extractCategory(articleId, frontmatter?.category),
-      readingTime,
+      readingTime: enhancedReadingTime,
       wordCount,
       codeBlockCount: codeBlocks.length,
       tableOfContents: this.buildTOCHierarchy(headings),
       hasInteractiveExamples: this.hasInteractiveExamples(codeBlocks),
-      tags: frontmatter?.tags || [],
+      tags: this.extractTags(frontmatter, content),
       relatedTopics: frontmatter?.relatedTopics || [],
       nextTopic: frontmatter?.['nextTopic'],
       lastUpdated: frontmatter?.lastUpdated ? new Date(frontmatter.lastUpdated) : new Date(),
-      contentHash: this.generateContentHash(content)
+      contentHash: this.generateContentHash(content),
+      // Additional metadata from frontmatter
+      description: frontmatter?.description || this.extractDescription(content),
+      author: frontmatter?.author,
+      version: frontmatter?.version,
+      difficulty: frontmatter?.difficulty || this.calculateDifficulty(codeBlocks.length, headings.length),
+      prerequisites: frontmatter?.prerequisites || [],
+      estimatedTime: frontmatter?.estimatedReadingTime || enhancedReadingTime
     };
+  }
+
+  /**
+   * Calculate enhanced reading time with complexity factors
+   */
+  private calculateEnhancedReadingTime(content: string, complexityMultiplier: number = 1.0): number {
+    const wordCount = this.countWords(content);
+    const codeBlocks = (content.match(/```[\s\S]*?```/g) || []).length;
+    const inlineCode = (content.match(/`[^`]+`/g) || []).length;
+    const images = (content.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+    const lists = (content.match(/^\s*[-*+]\s/gm) || []).length;
+
+    // Base reading time (200 words per minute)
+    let readingTime = wordCount / 200;
+    
+    // Add time for code blocks (1.5 minutes each)
+    readingTime += codeBlocks * 1.5;
+    
+    // Add time for inline code (6 seconds each)
+    readingTime += inlineCode * 0.1;
+    
+    // Add time for images (30 seconds each)
+    readingTime += images * 0.5;
+    
+    // Add time for lists (3 seconds per item)
+    readingTime += lists * 0.05;
+    
+    // Apply complexity multiplier
+    readingTime *= complexityMultiplier;
+    
+    return Math.max(1, Math.round(readingTime));
+  }
+
+  /**
+   * Get complexity multiplier based on skill level
+   */
+  private getComplexityMultiplier(skillLevel?: string): number {
+    const multipliers = {
+      'fundamentals': 0.8,
+      'intermediate': 1.0,
+      'advanced': 1.3,
+      'expert': 1.5
+    };
+    
+    return multipliers[skillLevel?.toLowerCase() as keyof typeof multipliers] || 1.0;
+  }
+
+  /**
+   * Extract tags from frontmatter and content analysis
+   */
+  private extractTags(frontmatter: any, content: string): string[] {
+    const tags = [...(frontmatter?.tags || [])];
+    
+    // Add auto-detected tags based on content
+    if (content.includes('@Component')) tags.push('component');
+    if (content.includes('@Injectable')) tags.push('service');
+    if (content.includes('@Directive')) tags.push('directive');
+    if (content.includes('@Pipe')) tags.push('pipe');
+    if (content.includes('FormControl')) tags.push('forms');
+    if (content.includes('Router')) tags.push('routing');
+    if (content.includes('HttpClient')) tags.push('http');
+    if (content.includes('Observable')) tags.push('rxjs');
+    if (content.includes('signal(')) tags.push('signals');
+    
+    // Remove duplicates and return
+    return [...new Set(tags)];
+  }
+
+  /**
+   * Extract description from content or frontmatter
+   */
+  private extractDescription(content: string): string {
+    // Try to find first paragraph after title
+    const lines = content.split('\n');
+    let firstParagraph = '';
+    let foundTitle = false;
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      // Skip empty lines
+      if (!trimmed) continue;
+      
+      // Skip title (starts with #)
+      if (trimmed.startsWith('#')) {
+        foundTitle = true;
+        continue;
+      }
+      
+      // First non-empty, non-title line is likely the description
+      if (foundTitle && trimmed.length > 0) {
+        firstParagraph = trimmed;
+        break;
+      }
+    }
+    
+    // Truncate to reasonable length
+    return firstParagraph.length > 200 
+      ? firstParagraph.substring(0, 197) + '...'
+      : firstParagraph;
+  }
+
+  /**
+   * Calculate difficulty score based on content complexity
+   */
+  private calculateDifficulty(codeBlockCount: number, headingCount: number): number {
+    // Simple heuristic: more code blocks and sections = higher difficulty
+    const codeComplexity = Math.min(codeBlockCount * 0.5, 3);
+    const structureComplexity = Math.min(headingCount * 0.2, 2);
+    
+    return Math.min(5, Math.max(1, Math.round(codeComplexity + structureComplexity)));
   }
 
   /**
