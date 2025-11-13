@@ -546,4 +546,65 @@ export class NavigationService {
   initializeProgressTracking(): void {
     this.loadProgressFromStorage();
   }
+
+  /**
+   * Initialize navigation with default content
+   * Loads "Introduction to Angular" by default if no topic is selected
+   */
+  initializeNavigation(): void {
+    // Check if we already have a selected topic
+    if (this.selectedTopicId()) {
+      return;
+    }
+
+    // Default topic: Introduction to Angular
+    const defaultTopicId = 'fundamentals/introduction-to-angular';
+    
+    // Verify the topic exists in our topics map
+    const topicsMap = this.topicsMapSubject.value;
+    if (topicsMap.has(defaultTopicId)) {
+      this.selectTopic(defaultTopicId);
+    } else {
+      // Fallback: select first available fundamentals topic
+      this.selectFirstAvailableTopic();
+    }
+  }
+
+  /**
+   * Select first available topic (fallback for default loading)
+   */
+  private selectFirstAvailableTopic(): void {
+    const topicsMap = this.topicsMapSubject.value;
+    
+    // Try to find first fundamentals topic
+    const fundamentalsTopics = Array.from(topicsMap.values())
+      .filter(topic => topic.level === SkillLevel.Fundamentals)
+      .sort((a, b) => a.title.localeCompare(b.title));
+
+    if (fundamentalsTopics.length > 0) {
+      this.selectTopic(fundamentalsTopics[0].id);
+    } else {
+      // Absolute fallback: select first available topic
+      const firstTopic = Array.from(topicsMap.values())[0];
+      if (firstTopic) {
+        this.selectTopic(firstTopic.id);
+      }
+    }
+  }
+
+  /**
+   * Check if default content should be loaded
+   * @returns True if no topic is currently selected
+   */
+  shouldLoadDefaultContent(): boolean {
+    return !this.selectedTopicId();
+  }
+
+  /**
+   * Get default topic ID
+   * @returns Default topic identifier
+   */
+  getDefaultTopicId(): string {
+    return 'fundamentals/introduction-to-angular';
+  }
 }

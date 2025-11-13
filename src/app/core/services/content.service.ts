@@ -415,4 +415,85 @@ export class ContentService {
     
     return prerequisites[topicId] || [];
   }
+
+  /**
+   * Load default content on application startup
+   * @returns Observable that emits when default content is loaded
+   */
+  loadDefaultContent(): Observable<ContentState> {
+    const defaultTopicId = 'fundamentals/introduction-to-angular';
+    return this.loadContent(defaultTopicId);
+  }
+
+  /**
+   * Load content with enhanced metadata extraction
+   * @param topicId Topic identifier
+   * @returns Observable with content and metadata
+   */
+  loadContentWithMetadata(topicId: string): Observable<{
+    content: ContentState;
+    metadata: any;
+  }> {
+    return this.loadContent(topicId).pipe(
+      map(content => ({
+        content,
+        metadata: this.markdownProcessor.extractArticleMetadata(content.markdown, topicId)
+      }))
+    );
+  }
+
+  /**
+   * Check if content is currently loading
+   * @returns True if any content is loading
+   */
+  isLoading(): boolean {
+    return this.currentContentSubject.value.loadingStatus === LoadingStatus.Loading;
+  }
+
+  /**
+   * Get current content state
+   * @returns Current content state
+   */
+  getCurrentContent(): ContentState {
+    return this.currentContentSubject.value;
+  }
+
+  /**
+   * Preload default content for faster initial loading
+   * @returns Observable that completes when preloading is done
+   */
+  preloadDefaultContent(): Observable<void> {
+    const defaultTopicId = 'fundamentals/introduction-to-angular';
+    const contentPath = this.getContentPath(defaultTopicId);
+    
+    return this.http.get(contentPath, { responseType: 'text' }).pipe(
+      map(markdown => {
+        // Cache the content for instant loading later
+        this.contentCache.set(defaultTopicId, markdown);
+      }),
+      catchError(error => {
+        console.warn('Failed to preload default content:', error);
+        return of(void 0);
+      })
+    );
+  }
+
+
+
+  /**
+   * Check if content exists for a topic
+   * @param topicId Topic identifier
+   * @returns Observable that emits true if content exists
+   */
+  contentExists(topicId: string): Observable<boolean> {
+    if (this.contentCache.has(topicId)) {
+      return of(true);
+    }
+
+    const contentPath = this.getContentPath(topicId);
+    return this.http.head(contentPath).pipe(
+      map(() => true),
+      catchError(() => of(false))
+    );
+  }
 }

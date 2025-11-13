@@ -225,19 +225,16 @@ import { CaveatsComponent } from './caveats.component';
       }
       
       @if (contentState().loadingStatus === LoadingStatus.Idle) {
-        <mat-card class="welcome-card">
+        <mat-card class="default-loading-card">
           <mat-card-header>
-            <mat-card-title>Welcome to Angular Knowledge Navigator</mat-card-title>
+            <mat-card-title>Loading Angular Knowledge Navigator</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <p>Select a topic from the navigation to begin your Angular learning journey.</p>
-            <p>This application demonstrates Angular best practices including:</p>
-            <ul>
-              <li>Standalone components with explicit imports</li>
-              <li>OnPush change detection strategy</li>
-              <li>Angular Signals for reactive state management</li>
-              <li>Constitutional compliance with Angular best practices</li>
-            </ul>
+            <div class="loading-container">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Preparing your Angular learning experience...</p>
+            </div>
+            <p class="loading-hint">Loading "Introduction to Angular" to get you started!</p>
           </mat-card-content>
         </mat-card>
       }
@@ -276,6 +273,9 @@ export class ContentViewerComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Initialize navigation service with default content
+    this.navigationService.initializeNavigation();
+    
     // Subscribe to content changes
     this.contentService.currentContent$.subscribe(state => {
       this.contentState.set(state);
@@ -294,6 +294,9 @@ export class ContentViewerComponent implements OnInit {
         this.currentTopicId.set(fullTopicId);
         this.loadContent(fullTopicId);
         this.loadEnhancedData(fullTopicId);
+      } else {
+        // No topic specified - load default content
+        this.loadDefaultContent();
       }
     });
   }
@@ -307,6 +310,42 @@ export class ContentViewerComponent implements OnInit {
         console.error('Failed to load content:', error);
       }
     });
+  }
+
+  /**
+   * Load default content (Introduction to Angular)
+   */
+  private loadDefaultContent(): void {
+    // Set loading state
+    this.contentState.set({
+      ...this.contentState(),
+      loadingStatus: LoadingStatus.Loading
+    });
+
+    // Load default content from ContentService
+    this.contentService.loadDefaultContent().subscribe({
+      next: (state) => {
+        this.currentTopicId.set(state.topicId);
+        this.loadEnhancedData(state.topicId);
+        console.log('Default content loaded:', state);
+      },
+      error: (error) => {
+        console.error('Failed to load default content:', error);
+        // Fallback to idle state with welcome message
+        this.contentState.set({
+          ...this.contentState(),
+          loadingStatus: LoadingStatus.Idle
+        });
+      }
+    });
+  }
+
+  /**
+   * Check if default content should be loaded
+   */
+  private shouldLoadDefaultContent(): boolean {
+    const currentState = this.contentState();
+    return currentState.loadingStatus === LoadingStatus.Idle && !currentState.topicId;
   }
 
   getTopicTitle(): string {
