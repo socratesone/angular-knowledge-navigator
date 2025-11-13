@@ -66,7 +66,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       expect(req.request.method).toBe('GET');
       expect(req.request.responseType).toBe('text');
       req.flush(mockMarkdownContent);
@@ -84,7 +84,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
@@ -101,10 +101,10 @@ export class AppComponent {}
         });
 
         // Should not make another HTTP request
-        httpMock.expectNone(`/assets/concepts/${topicId}.md`);
+        httpMock.expectNone(`assets/concepts/${topicId}.md`);
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(mockMarkdownContent);
     });
   });
@@ -126,7 +126,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(mockMarkdownContent);
     });
 
@@ -142,7 +142,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(invalidMarkdown);
     });
   });
@@ -158,7 +158,7 @@ export class AppComponent {}
         done();
       });
 
-      const expectedPath = `/assets/concepts/${level}/${topic}.md`;
+      const expectedPath = `assets/concepts/${level}/${topic}.md`;
       const req = httpMock.expectOne(expectedPath);
       req.flush('# Angular Signals\n\nModern reactive state management.');
     });
@@ -171,7 +171,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${complexTopicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${complexTopicId}.md`);
       req.flush('# Change Detection Strategies');
     });
   });
@@ -193,7 +193,7 @@ export class AppComponent {}
 
       service.loadContent(topicId).subscribe();
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('# Data Binding\n\nTwo-way data binding in Angular.');
     });
 
@@ -216,7 +216,7 @@ export class AppComponent {}
 
       service.loadContent(topicId).subscribe();
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('# Directives\n\nCustom directives in Angular.');
     });
   });
@@ -239,7 +239,7 @@ export class AppComponent {}
 
       // Expect HTTP requests for all topics
       topicIds.forEach((topicId, index) => {
-        const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+        const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
         req.flush(`# Topic ${index + 1}\n\nContent for ${topicId}`);
       });
     });
@@ -258,11 +258,11 @@ export class AppComponent {}
       });
 
       // First request succeeds
-      const req1 = httpMock.expectOne('/assets/concepts/fundamentals/existing-topic.md');
+      const req1 = httpMock.expectOne('assets/concepts/fundamentals/existing-topic.md');
       req1.flush('# Existing Topic');
 
       // Second request fails
-      const req2 = httpMock.expectOne('/assets/concepts/fundamentals/missing-topic.md');
+      const req2 = httpMock.expectOne('assets/concepts/fundamentals/missing-topic.md');
       req2.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
   });
@@ -287,12 +287,12 @@ export class AppComponent {}
       });
 
       // First request fails
-      const req1 = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req1 = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req1.error(new ErrorEvent('Network error'));
       attemptCount++;
 
       // Second request succeeds
-      const req2 = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req2 = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req2.flush('# Retry Test\n\nContent loaded successfully on retry.');
     });
   });

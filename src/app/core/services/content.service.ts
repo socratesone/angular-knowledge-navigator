@@ -5,6 +5,7 @@ import { map, catchError, shareReplay } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ContentState, LoadingStatus, ContentError, CodeExample, BestPractice } from '../../shared/models';
 import { MarkdownProcessorService, ProcessedContent } from './markdown-processor.service';
+import { AssetPathService } from './asset-path.service';
 
 // Re-export for backward compatibility (need runtime values for enums)
 export { LoadingStatus } from '../../shared/models';
@@ -29,7 +30,8 @@ export class ContentService {
   constructor(
     private http: HttpClient,
     private sanitizer: DomSanitizer,
-    private markdownProcessor: MarkdownProcessorService
+    private markdownProcessor: MarkdownProcessorService,
+    private assetPathService: AssetPathService
   ) {}
 
   /**
@@ -156,12 +158,14 @@ export class ContentService {
   }
 
   /**
-   * Get the file path for a topic's content
+   * Get the file path for content based on topic ID
    */
   private getContentPath(topicId: string): string {
     // Topic ID format: "level/topic-name"
     // e.g., "fundamentals/introduction-to-angular"
-    return `/assets/concepts/${topicId}.md`;
+    // Use relative path to respect base href for subdirectory deployments
+    const assetPath = `assets/concepts/${topicId}.md`;
+    return this.assetPathService.resolveAssetPath(assetPath);
   }
 
   /**

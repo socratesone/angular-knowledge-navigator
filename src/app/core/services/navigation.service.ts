@@ -10,6 +10,7 @@ import {
   LearningPath,
   LearningPathData 
 } from '../../shared/models';
+import { AssetPathService } from './asset-path.service';
 
 // Re-export for backward compatibility (need runtime values for enums)
 export { SkillLevel, NodeType } from '../../shared/models';
@@ -40,7 +41,10 @@ export class NavigationService {
   readonly navigationHistory$ = computed(() => this.navigationHistory());
   readonly navigationTree$ = this.navigationTreeSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private assetPathService: AssetPathService
+  ) {
     this.loadLearningPath();
     this.initializeProgressTracking();
   }
@@ -49,16 +53,37 @@ export class NavigationService {
    * Load and build navigation tree from learning path JSON
    */
   private loadLearningPath(): void {
-    this.http.get<LearningPathData[]>('/assets/data/learning-path.json').pipe(
+    const assetPath = this.assetPathService.resolveAssetPath('assets/data/learning-path.json');
+    const deploymentInfo = this.assetPathService.getDeploymentInfo();
+    
+    console.log('Navigation Service - Loading learning path:', {
+      assetPath,
+      deploymentInfo,
+      fullUrl: `${deploymentInfo.origin}${deploymentInfo.baseHref}${assetPath}`
+    });
+
+    this.http.get<LearningPathData[]>(assetPath).pipe(
       map(data => this.buildNavigationTree(data)),
       shareReplay(1)
     ).subscribe({
       next: ({ tree, topicsMap }) => {
+        console.log('Navigation Service - Successfully loaded learning path:', {
+          treeNodes: tree.length,
+          topicsCount: topicsMap.size
+        });
         this.navigationTreeSubject.next(tree);
         this.topicsMapSubject.next(topicsMap);
       },
       error: (error) => {
-        console.error('Failed to load learning path:', error);
+        console.error('Navigation Service - Failed to load learning path:', {
+          error,
+          assetPath,
+          deploymentInfo,
+          httpError: error.error,
+          httpStatus: error.status,
+          httpStatusText: error.statusText,
+          fullUrl: error.url
+        });
         // Fallback to empty tree
         this.navigationTreeSubject.next([]);
       }
