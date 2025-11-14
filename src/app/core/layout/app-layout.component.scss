@@ -1,243 +1,152 @@
+// App Layout Component Styles
+// Complements the main app.component.scss grid layout
+
 .app-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-
-  // Responsive layout classes
-  &.mobile-layout {
-    .app-header {
-      .app-title {
-        font-size: 1rem;
-        margin-right: 0.5rem;
-      }
-      
-      .search-toggle {
-        margin-right: 0.25rem;
-      }
-    }
-
-    .app-sidenav {
-      width: 280px; // Full-width mobile drawer
-      max-width: 85vw;
-    }
-  }
-
-  &.tablet-layout {
-    .app-sidenav {
-      width: 320px;
-    }
-  }
-
-  &.desktop-layout {
-    .app-sidenav {
-      width: 280px;
-    }
-  }
-}
-
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  
-  .spacer {
-    flex: 1 1 auto;
-  }
-  
-  .app-title {
-    margin-right: 1rem;
+  // Mobile backdrop for overlay navigation
+  .mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    animation: backdrop-fade-in 0.3s ease-in-out forwards;
     
-    @media (max-width: 767px) {
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
-  }
-  
-  .search-toggle {
-    margin-right: 0.5rem;
-    transition: all 0.2s ease;
-    
-    &.search-active {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: #ffeb3b;
-    }
-    
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-  }
-  
-  .search-results-badge {
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    margin-right: 0.5rem;
-    color: #ffeb3b;
-    font-weight: 500;
-  }
-  
-  .menu-toggle {
     @media (min-width: 768px) {
-      display: none; // Hide on desktop
+      display: none;
     }
   }
-}
 
-.app-container {
-  flex: 1;
-  margin-top: 64px; // Account for fixed toolbar
-  
-  .app-sidenav {
-    width: 300px;
-    border-right: 1px solid #e0e0e0;
-    
-    .sidenav-content {
+  @keyframes backdrop-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  // Header enhancements
+  .app-header {
+    .search-results-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin: 0 8px;
+      min-width: 24px;
+      text-align: center;
+      
+      animation: badge-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badge-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .header-actions {
+      .search-toggle {
+        &.search-active {
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+        }
+      }
+
+      .reset-layout {
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: rotate(90deg);
+        }
+      }
+    }
+  }
+
+  // Navigation panel enhancements
+  .navigation-panel {
+    .nav-content {
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .search-section,
+    .navigation-section {
       height: 100%;
       display: flex;
       flex-direction: column;
-      
-      .search-panel,
-      .navigation-panel {
-        flex: 1;
+    }
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color, #e0e0e0);
+      background: inherit;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      h3 {
+        margin: 0;
+        color: var(--primary-color, #1976d2);
+        font-weight: 600;
+        font-size: 1.125rem;
         display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      
-      .search-header,
-      .navigation-header {
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 1rem 1rem 0.5rem 1rem;
-        border-bottom: 1px solid #e0e0e0;
-        background: #f8f9fa;
-        
-        h3 {
-          margin: 0;
-          color: #1976d2;
-          font-weight: 500;
-          font-size: 1.1rem;
-        }
-        
-        .close-search,
-        .open-search {
-          color: #666;
-          
-          &:hover {
-            color: #1976d2;
-          }
-        }
-      }
-      
-      .search-panel {
-        app-search {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0.5rem;
-        }
-      }
-      
-      .navigation-panel {
-        app-navigation-tree {
-          flex: 1;
-          overflow-y: auto;
-          padding: 1rem;
-        }
-      }
-      
-      .placeholder {
-        color: #666;
-        font-style: italic;
-        margin: 1rem;
-      }
-    }
-    
-    @media (max-width: 767px) {
-      width: 280px;
-    }
-  }
-  
-  .app-content {
-    .content-area {
-      padding: 1rem;
-      height: 100%;
-      overflow-y: auto;
-      
-      @media (max-width: 767px) {
-        padding: 0.5rem;
-      }
-    }
-  }
-}
+        gap: 8px;
 
-/* Responsive behavior for mobile devices */
-@media (max-width: 767.98px) {
-  .app-layout {
-    .app-header {
-      height: 56px; // Mobile toolbar height
-      
-      .app-title {
-        font-size: 1.1rem;
+        .header-icon {
+          width: 20px;
+          height: 20px;
+          opacity: 0.8;
+        }
       }
-      
-      .menu-toggle {
-        margin-right: 8px;
-      }
-    }
-    
-    .app-container {
-      // Account for mobile toolbar height
-      margin-top: 56px;
-      height: calc(100vh - 56px);
-    }
-    
-    .app-sidenav {
-      width: 100vw;
-      max-width: 320px;
-      
-      .sidenav-content {
-        .navigation-panel {
-          app-navigation-tree {
-            padding: 0.5rem;
-          }
+
+      .close-search {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        border-radius: 6px;
+        transition: all 0.15s ease-in-out;
+
+        &:hover {
+          background: var(--nav-hover-bg, rgba(25, 118, 210, 0.04));
+          transform: scale(1.05);
         }
       }
     }
   }
-}
 
-/* Tablet specific styles */
-@media (min-width: 768px) and (max-width: 1023.98px) {
-  .app-layout {
-    .app-sidenav {
-      width: 320px;
+  // Content area enhancements
+  .content-area {
+    .content-wrapper {
+      animation: content-fade-in 0.4s ease-out;
     }
-    
-    .app-content {
-      .content-area {
-        padding: 1.5rem;
+
+    @keyframes content-fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   }
-}
 
-/* Desktop specific styles */
-@media (min-width: 1024px) {
-  .app-layout {
-    .app-container {
-      .app-sidenav {
-        // Desktop sidenav is always visible by default
-        border-right: 1px solid #e0e0e0;
-      }
+  // Dark theme adjustments
+  @media (prefers-color-scheme: dark) {
+    .mobile-backdrop {
+      background: rgba(0, 0, 0, 0.7);
     }
-    
-    .app-content {
-      .content-area {
-        padding: 2rem;
+
+    .search-header {
+      border-bottom-color: #424242;
+
+      h3 {
+        color: #90caf9;
       }
     }
   }

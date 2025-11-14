@@ -444,4 +444,308 @@ export class NavigationLayoutService {
       return null;
     }
   }
+
+  /**
+   * Get navigation width as CSS custom property value
+   * @returns CSS width value for navigation panel
+   */
+  getNavigationWidthCSS(): string {
+    const width = this.currentWidth();
+    return this.isCollapsed() ? '0px' : `${width}px`;
+  }
+
+  /**
+   * Get content width as CSS custom property value
+   * @returns CSS width value for content area
+   */
+  getContentWidthCSS(): string {
+    const viewportWidth = window.innerWidth;
+    const navWidth = this.isCollapsed() ? 0 : this.currentWidth();
+    return `${viewportWidth - navWidth}px`;
+  }
+
+  /**
+   * Get layout CSS custom properties for dynamic styling
+   * @returns Object with CSS custom properties
+   */
+  getLayoutCSSProperties(): Record<string, string> {
+    const layout = this.currentLayout();
+    const viewportWidth = window.innerWidth;
+    const navWidth = layout.isCollapsed ? 0 : layout.currentWidth;
+    
+    return {
+      '--nav-width': `${navWidth}px`,
+      '--nav-width-percentage': `${layout.widthPercentage}%`,
+      '--content-width': `${viewportWidth - navWidth}px`,
+      '--content-width-percentage': `${100 - (layout.isCollapsed ? 0 : layout.widthPercentage)}%`,
+      '--layout-transition': layout.isCollapsed ? 'all 0.3s ease-in-out' : 'none'
+    };
+  }
+
+  /**
+   * Check if current layout allows resizing
+   * @returns True if layout can be resized by user
+   */
+  canUserResize(): boolean {
+    const layout = this.currentLayout();
+    return !layout.isCollapsed && 
+           layout.breakpoint !== LayoutBreakpoint.MOBILE && 
+           !this.isMobile();
+  }
+
+  /**
+   * Snap width to common preset values
+   * @param width Current width to snap
+   * @returns Snapped width value
+   */
+  snapToPreset(width: number): number {
+    const viewportWidth = window.innerWidth;
+    const presets = [
+      0.25 * viewportWidth,  // 25%
+      0.28 * viewportWidth,  // 28% (default)
+      0.30 * viewportWidth,  // 30%
+      0.33 * viewportWidth,  // 33%
+      0.40 * viewportWidth   // 40%
+    ];
+
+    const snapThreshold = 20; // pixels
+    
+    for (const preset of presets) {
+      if (Math.abs(width - preset) <= snapThreshold) {
+        return Math.max(this.MIN_WIDTH, Math.min(this.MAX_WIDTH, preset));
+      }
+    }
+    
+    return width;
+  }
+
+  /**
+   * Auto-adjust layout for optimal viewing
+   * @returns Observable that emits when auto-adjustment is complete
+   */
+  autoAdjustLayout(): Observable<void> {
+    return new Observable<void>(subscriber => {
+      const viewportWidth = window.innerWidth;
+      const currentLayout = this.layoutState();
+      
+      let optimalWidth = currentLayout.currentWidth;
+      
+      // Auto-adjust based on viewport size
+      if (viewportWidth < 1200) {
+        optimalWidth = Math.min(optimalWidth, viewportWidth * 0.35);
+      } else if (viewportWidth > 1600) {
+        optimalWidth = Math.max(optimalWidth, 400);
+      }
+      
+      // Ensure within bounds
+      optimalWidth = Math.max(this.MIN_WIDTH, Math.min(this.MAX_WIDTH, optimalWidth));
+      
+      if (optimalWidth !== currentLayout.currentWidth) {
+        this.setWidth(optimalWidth).subscribe({
+          next: () => {
+            subscriber.next();
+            subscriber.complete();
+          },
+          error: (error) => subscriber.error(error)
+        });
+      } else {
+        subscriber.next();
+        subscriber.complete();
+      }
+    });
+  }
+
+  /**
+   * Export layout configuration for backup
+   * @returns Serialized layout configuration
+   */
+  exportLayoutConfig(): string {
+    const config = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      layout: this.layoutState(),
+      metadata: {
+        userAgent: navigator.userAgent,
+        screenResolution: `${screen.width}x${screen.height}`,
+        viewportSize: `${window.innerWidth}x${window.innerHeight}`
+      }
+    };
+    
+    return JSON.stringify(config, null, 2);
+  }
+
+  /**
+   * Import layout configuration from backup
+   * @param configJson Serialized layout configuration
+   * @returns Observable that emits when import is complete
+   */
+  importLayoutConfig(configJson: string): Observable<void> {
+    return new Observable<void>(subscriber => {
+      try {
+        const config = JSON.parse(configJson);
+        
+        // Validate config format
+        if (!config.version || !config.layout) {
+          throw new Error('Invalid configuration format');
+        }
+        
+        // Migrate if necessary
+        const migratedLayout = this.migrateLayoutConfig(config.layout, config.version);
+        
+        // Apply configuration
+        this.updateLayout(migratedLayout);
+        this.saveToStorage(migratedLayout);
+        
+        subscriber.next();
+        subscriber.complete();
+      } catch (error) {
+        subscriber.error(new Error(`Failed to import layout configuration: ${error}`));
+      }
+    });
+  }
+
+  /**
+   * Migrate layout configuration between versions
+   * @param layout Layout configuration to migrate
+   * @param version Source version
+   * @returns Migrated layout configuration
+   */
+  private migrateLayoutConfig(layout: any, version: string): NavigationLayout {
+    // For now, we only have version 1.0, but this allows for future migrations
+    const currentLayout = this.layoutState();
+    
+    return {
+      ...currentLayout,
+      currentWidth: this.validateWidth(layout.currentWidth),
+      widthPercentage: this.validatePercentage(layout.widthPercentage),
+      userPreferredWidth: layout.userPreferredWidth,
+      isCollapsed: typeof layout.isCollapsed === 'boolean' ? layout.isCollapsed : currentLayout.isCollapsed,
+      lastResized: layout.lastResized ? new Date(layout.lastResized) : new Date()
+    };
+  }
+
+  /**
+   * Get layout persistence statistics
+   * @returns Statistics about layout usage and persistence
+   */
+  getLayoutStats(): {
+    hasStoredPreferences: boolean;
+    lastSaved: Date | null;
+    totalResizes: number;
+    averageWidth: number;
+    preferredBreakpoint: LayoutBreakpoint;
+  } {
+    const stored = localStorage.getItem(this.STORAGE_KEY);
+    const layout = this.layoutState();
+    
+    return {
+      hasStoredPreferences: !!stored,
+      lastSaved: layout.lastResized,
+      totalResizes: this.getTotalResizeCount(),
+      averageWidth: this.calculateAverageWidth(),
+      preferredBreakpoint: layout.breakpoint
+    };
+  }
+
+  /**
+   * Clear all stored layout preferences
+   * @returns Observable that emits when preferences are cleared
+   */
+  clearStoredPreferences(): Observable<void> {
+    return new Observable<void>(subscriber => {
+      try {
+        localStorage.removeItem(this.STORAGE_KEY);
+        localStorage.removeItem(`${this.STORAGE_KEY}-stats`);
+        
+        // Reset to default
+        const defaultLayout = this.getDefaultLayout();
+        this.updateLayout(defaultLayout);
+        
+        subscriber.next();
+        subscriber.complete();
+      } catch (error) {
+        subscriber.error(new Error('Failed to clear stored preferences'));
+      }
+    });
+  }
+
+  /**
+   * Get total resize count from localStorage
+   */
+  private getTotalResizeCount(): number {
+    try {
+      const stats = localStorage.getItem(`${this.STORAGE_KEY}-stats`);
+      return stats ? JSON.parse(stats).resizeCount || 0 : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Increment resize count
+   */
+  private incrementResizeCount(): void {
+    try {
+      const stats = {
+        resizeCount: this.getTotalResizeCount() + 1,
+        lastResize: new Date().toISOString()
+      };
+      localStorage.setItem(`${this.STORAGE_KEY}-stats`, JSON.stringify(stats));
+    } catch {
+      // Silently fail if localStorage is not available
+    }
+  }
+
+  /**
+   * Calculate average width from usage history
+   */
+  private calculateAverageWidth(): number {
+    // For now, return current width
+    // In a full implementation, this could track width history
+    return this.layoutState().currentWidth;
+  }
+
+  /**
+   * Validate width value
+   */
+  private validateWidth(width: any): number {
+    const numWidth = Number(width);
+    if (isNaN(numWidth) || numWidth < this.MIN_WIDTH || numWidth > this.MAX_WIDTH) {
+      return this.getDefaultLayout().currentWidth;
+    }
+    return numWidth;
+  }
+
+  /**
+   * Validate percentage value
+   */
+  private validatePercentage(percentage: any): number {
+    const numPercentage = Number(percentage);
+    if (isNaN(numPercentage) || numPercentage < 10 || numPercentage > 60) {
+      return this.DEFAULT_PERCENTAGE;
+    }
+    return numPercentage;
+  }
+
+  /**
+   * Enhanced save to storage with error recovery
+   */
+  private enhancedSaveToStorage(layout: NavigationLayout): void {
+    try {
+      this.saveToStorage(layout);
+      this.incrementResizeCount();
+    } catch (error) {
+      console.warn('Enhanced save failed, attempting basic save:', error);
+      // Fallback to basic save without stats
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+          currentWidth: layout.currentWidth,
+          widthPercentage: layout.widthPercentage,
+          isCollapsed: layout.isCollapsed
+        }));
+      } catch (fallbackError) {
+        console.error('All storage attempts failed:', fallbackError);
+      }
+    }
+  }
 }

@@ -1,0 +1,328 @@
+// Layout Splitter Component Styles
+// Provides visual feedback and interactive states for resizing panels
+
+.layout-splitter {
+  position: relative;
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+  background: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+
+  // Vertical splitter (default - for left/right panels)
+  &.vertical {
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    
+    &:hover,
+    &.hover {
+      background: rgba(25, 118, 210, 0.1);
+      
+      .splitter-handle {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+    
+    &.dragging {
+      background: var(--primary-color, #1976d2);
+      
+      .splitter-handle {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+      }
+    }
+  }
+
+  // Horizontal splitter (for top/bottom panels)
+  &.horizontal {
+    width: 100%;
+    height: 4px;
+    cursor: row-resize;
+    
+    &:hover,
+    &.hover {
+      background: rgba(25, 118, 210, 0.1);
+      
+      .splitter-handle {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
+    }
+    
+    &.dragging {
+      background: var(--primary-color, #1976d2);
+      
+      .splitter-handle {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
+  }
+
+  // Disabled state
+  &.disabled {
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
+    
+    .splitter-handle {
+      display: none;
+    }
+  }
+}
+
+// Visual handle indicator
+.splitter-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%) scale(0.8);
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  z-index: 20;
+
+  .handle-dots {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .dot {
+      width: 3px;
+      height: 3px;
+      background: var(--secondary-text-color, #757575);
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+    }
+  }
+
+  // Horizontal orientation adjustments
+  .layout-splitter.horizontal & {
+    .handle-dots {
+      flex-direction: row;
+      padding: 4px 8px;
+    }
+  }
+
+  // Active state
+  .layout-splitter.dragging & {
+    .handle-dots {
+      background: var(--primary-color, #1976d2);
+      border-color: var(--primary-color, #1976d2);
+
+      .dot {
+        background: white;
+      }
+    }
+  }
+}
+
+// Preview line during drag
+.preview-line {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--primary-color, #1976d2);
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.8;
+  box-shadow: 0 0 4px rgba(25, 118, 210, 0.5);
+
+  // Animation
+  animation: preview-pulse 0.5s ease-in-out infinite alternate;
+
+  .layout-splitter.horizontal & {
+    left: 0;
+    right: 0;
+    top: auto;
+    width: auto;
+    height: 2px;
+  }
+}
+
+@keyframes preview-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+// Snap indicators
+.snap-indicators {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 100vw;
+  pointer-events: none;
+  z-index: 5;
+
+  .snap-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(25, 118, 210, 0.3);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    transform: translateX(-50%);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--primary-color, #1976d2);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    &.active {
+      opacity: 1;
+      background: var(--primary-color, #1976d2);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+  }
+
+  // Horizontal orientation adjustments
+  .layout-splitter.horizontal & {
+    top: 0;
+    bottom: 100vh;
+    left: 0;
+    right: 0;
+
+    .snap-indicator {
+      left: 0;
+      right: 0;
+      top: auto;
+      width: auto;
+      height: 1px;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 767.98px) {
+  .layout-splitter {
+    display: none; // Hide splitter on mobile
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .layout-splitter {
+    width: 3px; // Thinner splitter on tablet
+    
+    .splitter-handle {
+      .handle-dots {
+        padding: 6px 3px;
+        
+        .dot {
+          width: 2px;
+          height: 2px;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .layout-splitter {
+    &:hover,
+    &.hover {
+      background: rgba(144, 202, 249, 0.2);
+    }
+    
+    &.dragging {
+      background: var(--primary-color-light, #42a5f5);
+    }
+  }
+
+  .splitter-handle {
+    .handle-dots {
+      background: rgba(66, 66, 66, 0.9);
+      border-color: #616161;
+
+      .dot {
+        background: #e0e0e0;
+      }
+    }
+  }
+
+  .snap-indicators .snap-indicator {
+    background: rgba(144, 202, 249, 0.4);
+
+    &.active {
+      background: var(--primary-color-light, #42a5f5);
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .layout-splitter {
+    &:hover,
+    &.hover {
+      background: #000000;
+    }
+    
+    &.dragging {
+      background: #000000;
+    }
+  }
+
+  .splitter-handle {
+    .handle-dots {
+      border-width: 2px;
+      border-color: #000000;
+
+      .dot {
+        background: #000000;
+      }
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .layout-splitter,
+  .layout-splitter *,
+  .splitter-handle,
+  .preview-line,
+  .snap-indicator {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+// Focus styles for accessibility
+.layout-splitter:focus {
+  outline: 2px solid var(--primary-color, #1976d2);
+  outline-offset: 2px;
+}
+
+// Touch-friendly sizing
+@media (pointer: coarse) {
+  .layout-splitter.vertical {
+    width: 8px; // Wider touch target
+  }
+  
+  .layout-splitter.horizontal {
+    height: 8px; // Taller touch target
+  }
+}
