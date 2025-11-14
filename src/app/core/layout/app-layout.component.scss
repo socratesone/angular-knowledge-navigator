@@ -26,6 +26,37 @@
 
   // Header enhancements
   .app-header {
+    // Ensure header title elements are aligned horizontally
+    .header-title {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+
+      h1 {
+        margin: 0;
+        font-size: inherit;
+        font-weight: inherit;
+      }
+
+      .app-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .nav-toggle {
+        flex-shrink: 0;
+      }
+    }
+
     .search-results-badge {
       background: rgba(255, 255, 255, 0.2);
       color: white;

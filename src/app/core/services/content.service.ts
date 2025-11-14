@@ -83,12 +83,15 @@ export class ContentService {
    */
   private processMarkdown(markdown: string, topicId: string): Observable<ContentState> {
     try {
+      // Remove duplicate code example blocks (keep first occurrence)
+      const cleanedMarkdown = this.removeDuplicateCodeExamples(markdown);
+
       // Use our enhanced markdown processor with frontmatter support
-      const processedContent = this.markdownProcessor.processMarkdown(markdown);
+      const processedContent = this.markdownProcessor.processMarkdown(cleanedMarkdown);
       
       const contentState: ContentState = {
         topicId,
-        markdown,
+        markdown: cleanedMarkdown,
         renderedHtml: processedContent.html,
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
@@ -117,8 +120,11 @@ export class ContentService {
   private processMarkdownSync(markdown: string, topicId: string): ContentState {
     try {
       // Process cross-references before markdown conversion
-      const processedMarkdown = this.processCrossReferences(markdown);
+      let processedMarkdown = this.processCrossReferences(markdown);
       
+      // Remove duplicate code example blocks before processing
+      processedMarkdown = this.removeDuplicateCodeExamples(processedMarkdown);
+
       // Use our enhanced markdown processor with frontmatter support
       const processedContent = this.markdownProcessor.processMarkdown(processedMarkdown);
       
@@ -155,6 +161,52 @@ export class ContentService {
       this.currentContentSubject.next(errorState);
       return errorState;
     }
+  }
+
+  /**
+   * Remove duplicate fenced code blocks from markdown while preserving the first occurrence.
+   * This helps eliminate light/dark duplicate examples or accidental repeated snippets.
+   */
+  private removeDuplicateCodeExamples(markdown: string): string {
+    if (!markdown) return markdown;
+
+    // Match fenced code blocks including info string (```lang ... ```)
+    const fenceRegex = /```[\s\S]*?```/g;
+    const seen = new Set<string>();
+    let lastIndex = 0;
+    let result = '';
+
+    const matches = [...markdown.matchAll(fenceRegex)];
+
+    if (matches.length === 0) return markdown;
+
+    for (const m of matches) {
+      const match = m[0];
+      const index = m.index ?? -1;
+
+      // Append the content between lastIndex and this match start
+      result += markdown.slice(lastIndex, index);
+
+      // Normalize the code block content for comparison (strip info string and trim)
+      const inner = match.replace(/^```\s*[^\n]*\n?|```$/g, '').replace(/\r\n/g, '\n').trim();
+
+      if (!seen.has(inner)) {
+        // Keep first occurrence
+        seen.add(inner);
+        result += match;
+      } else {
+        // Duplicate found: remove it (skip adding)
+        // Also remove any immediately preceding single-line caption like '```output' or simple titles
+        // (Keep it simple: we already removed the block itself)
+      }
+
+      lastIndex = index + match.length;
+    }
+
+    // Append any remaining tail content
+    result += markdown.slice(lastIndex);
+
+    return result;
   }
 
   /**

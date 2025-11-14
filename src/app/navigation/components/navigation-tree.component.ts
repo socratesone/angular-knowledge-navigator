@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, effect, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, effect, untracked, inject, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatTreeModule } from '@angular/material/tree';
@@ -141,7 +141,9 @@ export class NavigationTreeComponent implements OnInit {
     // Effect to track selected topic changes
     effect(() => {
       const selectedTopic = this.navigationService.selectedTopic$();
-      this.selectedNodeId.set(selectedTopic?.id || null);
+      untracked(() => {
+        this.selectedNodeId.set(selectedTopic?.id || null);
+      });
     });
   }
 

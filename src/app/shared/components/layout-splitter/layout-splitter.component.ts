@@ -105,9 +105,9 @@ export class LayoutSplitterComponent implements OnDestroy {
   @Output() doubleClick = new EventEmitter<void>();
 
   // Internal state
-  private readonly isDragging = signal<boolean>(false);
-  private readonly isHovering = signal<boolean>(false);
-  private readonly previewPosition = signal<number>(0);
+  readonly isDragging = signal<boolean>(false);
+  readonly isHovering = signal<boolean>(false);
+  readonly previewPosition = signal<number>(0);
   
   private startX = 0;
   private startWidth = 0;

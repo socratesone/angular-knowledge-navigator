@@ -465,7 +465,54 @@ export class MarkdownProcessorService {
     metadata.isCollapsible = lines.length > 20;
     metadata.showLineNumbers = lines.length > 10;
     
+    // Normalize and standardize title if present or infer one
+    metadata.title = this.standardizeCodeBlockTitle(metadata.title, metadata.fileName, language, code);
+
     return metadata;
+  }
+
+  /**
+   * Standardize code block titles: replace generic headings with descriptive titles
+   */
+  private standardizeCodeBlockTitle(title: string | undefined, fileName: string | undefined, language: string, code: string): string | undefined {
+    const genericPatterns = [
+      /code examples to include/i,
+      /^code examples?$/i,
+      /^example$/i,
+      /^sample$/i,
+      /^snippet$/i,
+      /^code snippet$/i,
+      /^example:\s*$/i
+    ];
+
+    if (title) {
+      const trimmed = title.trim();
+      // If title is generic, replace it
+      for (const pat of genericPatterns) {
+        if (pat.test(trimmed)) {
+          // Prefer filename if available
+          if (fileName) return fileName;
+          // Else use language-based title
+          return `Example (${language || 'code'})`;
+        }
+      }
+
+      // If title already looks descriptive, return as-is
+      return trimmed;
+    }
+
+    // No title present: infer from filename, first non-empty comment line, or language
+    if (fileName) return fileName;
+
+    // Try to infer a short description from first comment line
+    const firstComment = code.split('\n').find(l => l.trim().startsWith('//') || l.trim().startsWith('/*'));
+    if (firstComment) {
+      const inferred = firstComment.replace(/^(\/\/|\/\*)\s*/, '').replace(/\*\/$/, '').trim();
+      if (inferred.length > 3 && inferred.length < 80) return inferred;
+    }
+
+    // Fallback to language
+    return language ? `Example (${language})` : undefined;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ViewChild, signal, computed, inject, effect, AfterViewInit, ElementRef, OnDestroy, HostListener } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, signal, computed, inject, effect, untracked, AfterViewInit, ElementRef, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -232,15 +232,18 @@ export class AppLayoutComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const responsiveState = this.breakpointService.responsiveState();
       
-      // Close sidenav on mobile when switching to mobile layout
-      if (responsiveState.isMobile && this._sidenavOpened()) {
-        this._sidenavOpened.set(false);
-      }
-      
-      // Auto-open sidenav on desktop
-      if (responsiveState.isDesktop && !this._sidenavOpened()) {
-        this._sidenavOpened.set(true);
-      }
+      // Use untracked to prevent signal writes from causing NG0600 error
+      untracked(() => {
+        // Close sidenav on mobile when switching to mobile layout
+        if (responsiveState.isMobile && this._sidenavOpened()) {
+          this._sidenavOpened.set(false);
+        }
+        
+        // Auto-open sidenav on desktop
+        if (responsiveState.isDesktop && !this._sidenavOpened()) {
+          this._sidenavOpened.set(true);
+        }
+      });
     });
 
     // Setup edge gestures immediately
@@ -390,8 +393,10 @@ export class AppLayoutComponent implements AfterViewInit, OnDestroy {
   onResizeMove(event: any): void {
     if (!this._isResizing()) return;
     
-    // Apply width from splitter event
-    this.navigationLayoutService.setWidth(event.width).subscribe();
+    // Validate width before applying
+    if (typeof event.width === 'number' && !isNaN(event.width) && isFinite(event.width)) {
+      this.navigationLayoutService.setWidth(event.width).subscribe();
+    }
   }
 
   /**
@@ -400,12 +405,14 @@ export class AppLayoutComponent implements AfterViewInit, OnDestroy {
   onResizeEnd(event: any): void {
     this._isResizing.set(false);
     
-    // Apply final width and save preference
-    this.navigationLayoutService.setWidth(event.width).subscribe({
-      next: () => {
-        this.navigationLayoutService.saveUserPreference().subscribe();
-      }
-    });
+    // Validate width before applying
+    if (typeof event.width === 'number' && !isNaN(event.width) && isFinite(event.width)) {
+      this.navigationLayoutService.setWidth(event.width).subscribe({
+        next: () => {
+          this.navigationLayoutService.saveUserPreference().subscribe();
+        }
+      });
+    }
     
     console.log('Resize ended:', event);
   }

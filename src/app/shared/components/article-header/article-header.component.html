@@ -20,8 +20,7 @@
       <!-- Article Metadata Tags -->
       <div class="article-tags" *ngIf="metadata.tags && metadata.tags.length > 0">
         <mat-chip-set aria-label="Article tags">
-          <mat-chip *ngFor="let tag of metadata.tags" 
-                   [selected]="false">
+          <mat-chip *ngFor="let tag of metadata.tags">
             {{ tag }}
           </mat-chip>
         </mat-chip-set>
@@ -35,11 +34,10 @@
       <div *ngIf="showLevel && levelBadgeConfig()" 
            class="level-badge-container">
         <mat-chip [color]="levelBadgeConfig()!.color"
-                 [selected]="true"
                  [class]="levelBadgeConfig()!.cssClass"
                  [matTooltip]="levelBadgeConfig()!.description"
                  [attr.aria-label]="getLevelBadgeAriaLabel()">
-          <mat-icon [matChipAvatar]="true">{{ levelBadgeConfig()!.icon }}</mat-icon>
+          <mat-icon>{{ levelBadgeConfig()!.icon }}</mat-icon>
           {{ levelBadgeConfig()!.label }}
         </mat-chip>
         
@@ -55,10 +53,9 @@
       <!-- Reading Time Badge -->
       <div *ngIf="showReadingTime && readingTimeDisplay()" 
            class="reading-time-badge">
-        <mat-chip [selected]="false"
-                 [matTooltip]="'Estimated reading time based on content complexity'"
+        <mat-chip [matTooltip]="'Estimated reading time based on content complexity'"
                  [attr.aria-label]="getReadingTimeAriaLabel()">
-          <mat-icon [matChipAvatar]="true">schedule</mat-icon>
+          <mat-icon>schedule</mat-icon>
           {{ readingTimeDisplay() }}
         </mat-chip>
       </div>
@@ -66,10 +63,9 @@
       <!-- Code Examples Indicator -->
       <div *ngIf="codeBlockCount() > 0" 
            class="code-examples-badge">
-        <mat-chip [selected]="false"
-                 [matTooltip]="codeBlockCount() + ' code examples included'"
+        <mat-chip [matTooltip]="codeBlockCount() + ' code examples included'"
                  [attr.aria-label]="codeBlockCount() + ' code examples in this article'">
-          <mat-icon [matChipAvatar]="true">code</mat-icon>
+          <mat-icon>code</mat-icon>
           {{ codeBlockCount() }} {{ codeBlockCount() === 1 ? 'example' : 'examples' }}
         </mat-chip>
       </div>
@@ -77,11 +73,10 @@
       <!-- Interactive Examples Indicator -->
       <div *ngIf="hasCodeExamples()" 
            class="interactive-badge">
-        <mat-chip [selected]="false"
-                 color="accent"
+        <mat-chip color="accent"
                  matTooltip="Contains interactive code examples"
                  aria-label="This article includes interactive code examples">
-          <mat-icon [matChipAvatar]="true">play_circle</mat-icon>
+          <mat-icon>play_circle</mat-icon>
           Interactive
         </mat-chip>
       </div>

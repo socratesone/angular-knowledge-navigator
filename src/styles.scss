@@ -3,6 +3,9 @@
 // Import clipboard notification styles
 @import 'app/core/styles/clipboard-notifications.scss';
 
+// Import Prism.js dark theme for code syntax highlighting
+@import 'assets/styles/prism-dark-theme.scss';
+
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 

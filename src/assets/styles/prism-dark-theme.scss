@@ -1,0 +1,493 @@
+/**
+ * Prism.js Dark Theme for Angular Knowledge Navigator
+ * Comprehensive dark syntax highlighting with accessibility features
+ * Based on modern dark themes with educational focus
+ */
+
+// Color Palette - Consistent with Angular Material Dark Theme
+:root {
+  // Base colors
+  --prism-bg: #1e1e1e;
+  --prism-bg-light: #252526;
+  --prism-surface: #2d2d30;
+  --prism-border: #3e3e42;
+  --prism-text: #d4d4d4;
+  --prism-text-muted: #969696;
+  
+  // Syntax colors - carefully selected for readability and accessibility
+  --prism-comment: #6a9955;        // Green for comments
+  --prism-keyword: #569cd6;        // Blue for keywords
+  --prism-string: #ce9178;         // Orange for strings
+  --prism-number: #b5cea8;         // Light green for numbers
+  --prism-function: #dcdcaa;       // Yellow for functions
+  --prism-class: #4ec9b0;          // Cyan for classes/types
+  --prism-property: #9cdcfe;       // Light blue for properties
+  --prism-operator: #d4d4d4;       // Default text for operators
+  --prism-punctuation: #cccccc;    // Light gray for punctuation
+  --prism-variable: #9cdcfe;       // Light blue for variables
+  --prism-constant: #4fc1ff;       // Bright blue for constants
+  --prism-builtin: #d19a66;        // Orange for built-ins
+  --prism-important: #f92672;      // Red for important/errors
+  --prism-regex: #d16969;          // Red for regex
+  --prism-tag: #569cd6;            // Blue for HTML tags
+  --prism-attr-name: #92c5f7;      // Light blue for attributes
+  --prism-attr-value: #ce9178;     // Orange for attribute values
+  --prism-selector: #d7ba7d;       // Gold for CSS selectors
+  --prism-rule: #c586c0;           // Purple for CSS rules
+  
+  // UI colors
+  --prism-line-highlight: rgba(255, 255, 255, 0.08);
+  --prism-line-number: #858585;
+  --prism-line-number-bg: #1e1e1e;
+  --prism-selection: rgba(173, 214, 255, 0.15);
+  --prism-scrollbar: rgba(255, 255, 255, 0.2);
+  --prism-scrollbar-hover: rgba(255, 255, 255, 0.3);
+  
+  // Educational enhancements
+  --prism-highlight-yellow: rgba(255, 235, 59, 0.2);
+  --prism-highlight-blue: rgba(33, 150, 243, 0.2);
+  --prism-highlight-green: rgba(76, 175, 80, 0.2);
+  --prism-highlight-red: rgba(244, 67, 54, 0.2);
+}
+
+// Base code block styling
+pre[class*="language-"],
+code[class*="language-"] {
+  color: var(--prism-text);
+  background: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  tab-size: 2;
+  -webkit-hyphens: none;
+  hyphens: none;
+  
+  // Smooth font rendering
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+// Block code container
+pre[class*="language-"] {
+  background: var(--prism-bg);
+  border: 1px solid var(--prism-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow: auto;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  // Enhanced scrollbar
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--prism-bg-light);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--prism-scrollbar);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--prism-scrollbar-hover);
+    }
+  }
+  
+  // Firefox scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: var(--prism-scrollbar) var(--prism-bg-light);
+}
+
+// Inline code
+:not(pre) > code[class*="language-"] {
+  background: var(--prism-bg-light);
+  color: var(--prism-text);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  border: 1px solid var(--prism-border);
+  white-space: normal;
+}
+
+// Selection
+pre[class*="language-"]::-moz-selection,
+pre[class*="language-"] ::-moz-selection,
+code[class*="language-"]::-moz-selection,
+code[class*="language-"] ::-moz-selection {
+  background: var(--prism-selection);
+}
+
+pre[class*="language-"]::selection,
+pre[class*="language-"] ::selection,
+code[class*="language-"]::selection,
+code[class*="language-"] ::selection {
+  background: var(--prism-selection);
+}
+
+// Token styles
+.token {
+  &.comment,
+  &.prolog,
+  &.doctype,
+  &.cdata {
+    color: var(--prism-comment);
+    font-style: italic;
+  }
+  
+  &.punctuation {
+    color: var(--prism-punctuation);
+  }
+  
+  &.namespace {
+    opacity: 0.8;
+  }
+  
+  &.property,
+  &.tag,
+  &.boolean,
+  &.number,
+  &.constant,
+  &.symbol,
+  &.deleted {
+    color: var(--prism-number);
+  }
+  
+  &.selector,
+  &.attr-name,
+  &.string,
+  &.char,
+  &.builtin,
+  &.inserted {
+    color: var(--prism-string);
+  }
+  
+  &.operator,
+  &.entity,
+  &.url,
+  .language-css &.string,
+  .style &.string {
+    color: var(--prism-operator);
+  }
+  
+  &.atrule,
+  &.attr-value,
+  &.keyword {
+    color: var(--prism-keyword);
+    font-weight: 600;
+  }
+  
+  &.function,
+  &.class-name {
+    color: var(--prism-function);
+    font-weight: 600;
+  }
+  
+  &.regex,
+  &.important,
+  &.variable {
+    color: var(--prism-variable);
+  }
+  
+  &.important,
+  &.bold {
+    font-weight: bold;
+  }
+  
+  &.italic {
+    font-style: italic;
+  }
+  
+  &.entity {
+    cursor: help;
+  }
+}
+
+// Language-specific enhancements
+// TypeScript/JavaScript
+.language-typescript,
+.language-javascript {
+  .token {
+    &.keyword {
+      color: var(--prism-keyword);
+      
+      // Specific keyword colors
+      &.control {
+        color: var(--prism-important); // if, else, for, while
+      }
+      
+      &.module {
+        color: var(--prism-class); // import, export
+      }
+    }
+    
+    &.function {
+      color: var(--prism-function);
+    }
+    
+    &.class-name {
+      color: var(--prism-class);
+    }
+    
+    &.property-access {
+      color: var(--prism-property);
+    }
+  }
+}
+
+// HTML
+.language-html {
+  .token {
+    &.tag {
+      color: var(--prism-tag);
+      
+      .punctuation {
+        color: var(--prism-tag);
+      }
+    }
+    
+    &.attr-name {
+      color: var(--prism-attr-name);
+    }
+    
+    &.attr-value {
+      color: var(--prism-attr-value);
+    }
+  }
+}
+
+// CSS/SCSS
+.language-css,
+.language-scss {
+  .token {
+    &.selector {
+      color: var(--prism-selector);
+    }
+    
+    &.property {
+      color: var(--prism-property);
+    }
+    
+    &.function {
+      color: var(--prism-function);
+    }
+    
+    &.at-rule {
+      color: var(--prism-rule);
+    }
+  }
+}
+
+// JSON
+.language-json {
+  .token {
+    &.property {
+      color: var(--prism-attr-name);
+    }
+    
+    &.string {
+      color: var(--prism-string);
+    }
+    
+    &.number {
+      color: var(--prism-number);
+    }
+    
+    &.boolean,
+    &.null {
+      color: var(--prism-constant);
+    }
+  }
+}
+
+// Shell/Bash
+.language-bash,
+.language-shell {
+  .token {
+    &.function {
+      color: var(--prism-builtin);
+    }
+    
+    &.keyword {
+      color: var(--prism-keyword);
+    }
+    
+    &.string {
+      color: var(--prism-string);
+    }
+    
+    &.comment {
+      color: var(--prism-comment);
+    }
+  }
+}
+
+// Line highlighting
+.line-highlight {
+  background: var(--prism-line-highlight);
+  background: linear-gradient(to right, var(--prism-line-highlight) 70%, transparent);
+  border-left: 3px solid var(--prism-keyword);
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 1rem;
+}
+
+// Line numbers
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid var(--prism-border);
+  background: var(--prism-line-number-bg);
+  padding-right: 1rem;
+  margin-right: 1rem;
+  
+  > span {
+    color: var(--prism-line-number);
+    display: block;
+    counter-increment: linenumber;
+    
+    &:before {
+      content: counter(linenumber);
+      display: block;
+      padding-right: 0.8em;
+      text-align: right;
+      font-size: 0.9em;
+    }
+  }
+}
+
+// Code block title/caption
+.code-block-title {
+  background: var(--prism-surface);
+  color: var(--prism-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  margin: 0;
+  border: 1px solid var(--prism-border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--prism-keyword);
+    opacity: 0.6;
+  }
+  
+  + pre[class*="language-"] {
+    margin-top: 0;
+    border-radius: 0 0 8px 8px;
+  }
+}
+
+// Educational highlights
+.highlight-yellow {
+  background: var(--prism-highlight-yellow);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+.highlight-blue {
+  background: var(--prism-highlight-blue);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+.highlight-green {
+  background: var(--prism-highlight-green);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+.highlight-red {
+  background: var(--prism-highlight-red);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  pre[class*="language-"] {
+    padding: 1rem;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  
+  .code-block-title {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .line-numbers .line-numbers-rows {
+    padding-right: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  :root {
+    --prism-bg: #000000;
+    --prism-text: #ffffff;
+    --prism-border: #ffffff;
+    --prism-comment: #00ff00;
+    --prism-keyword: #00bfff;
+    --prism-string: #ffff00;
+    --prism-function: #ff69b4;
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+// Print styles
+@media print {
+  pre[class*="language-"] {
+    background: white !important;
+    color: black !important;
+    border: 2px solid black !important;
+    box-shadow: none !important;
+  }
+  
+  .token {
+    color: black !important;
+    
+    &.comment {
+      color: #666 !important;
+    }
+    
+    &.keyword,
+    &.function {
+      font-weight: bold !important;
+    }
+  }
+  
+  .code-block-title {
+    background: #f5f5f5 !important;
+    color: black !important;
+    border-color: black !important;
+  }
+}

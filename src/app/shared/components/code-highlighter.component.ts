@@ -1,4 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, signal, inject } from '@angular/core';
+import * as Prism from 'prismjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -241,13 +242,21 @@ export class CodeHighlighterComponent implements OnInit, AfterViewInit, OnDestro
   private highlightCode(): void {
     if (this.codeElement?.nativeElement) {
       // Integration with Prism.js would happen here
-      // For now, we'll mark as highlighted
-      this.highlighted.set(true);
-      
-      // Add language class for CSS styling
-      const codeElement = this.codeElement.nativeElement.querySelector('code');
-      if (codeElement) {
-        codeElement.className = `language-${this.example().language}`;
+      const codeElem = this.codeElement.nativeElement.querySelector('code');
+      if (codeElem) {
+        // Ensure correct language class
+        codeElem.className = `language-${this.example().language}`;
+
+        try {
+          // Use Prism to highlight the element in-place
+          Prism.highlightElement(codeElem as Element);
+          this.highlighted.set(true);
+        } catch (err) {
+          console.warn('Prism highlighting failed in CodeHighlighterComponent', err);
+          this.highlighted.set(false);
+        }
+      } else {
+        this.highlighted.set(false);
       }
     }
   }

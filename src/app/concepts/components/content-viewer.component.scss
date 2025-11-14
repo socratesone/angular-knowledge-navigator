@@ -104,10 +104,11 @@
         }
         
         pre {
-          background-color: #f5f5f5;
-          border: 1px solid #e0e0e0;
-          border-radius: 4px;
-          padding: 1rem;
+          background: var(--prism-bg, #1e1e1e);
+          color: var(--prism-text, #d4d4d4);
+          border: 1px solid var(--prism-border, #3e3e42);
+          border-radius: 8px;
+          padding: 1.5rem;
           overflow-x: auto;
           margin: 1rem 0;
           
@@ -120,13 +121,13 @@
             max-width: 100%;
             overflow-x: auto;
             
-            // Mobile-friendly scrollbar
+            // Mobile-friendly scrollbar (dark)
             &::-webkit-scrollbar {
               height: 8px;
             }
             
             &::-webkit-scrollbar-thumb {
-              background-color: #ccc;
+              background-color: var(--prism-scrollbar, rgba(255,255,255,0.2));
               border-radius: 4px;
             }
           }
@@ -139,28 +140,30 @@
             background: transparent;
             padding: 0;
             border: none;
-            font-family: 'Courier New', Monaco, monospace;
-            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Monaco, monospace;
+            font-size: 0.95rem;
+            color: inherit;
             
             // Responsive font sizes for code
             @media (max-width: 767.98px) {
-              font-size: 0.8rem;
+              font-size: 0.85rem;
               line-height: 1.4;
             }
             
             @media (min-width: 1024px) {
-              font-size: 0.95rem;
+              font-size: 1rem;
             }
           }
         }
         
         code {
-          background-color: #f5f5f5;
+          background-color: var(--prism-bg-light, #252526);
+          color: var(--prism-text, #d4d4d4);
           padding: 0.2rem 0.4rem;
-          border-radius: 3px;
-          font-family: 'Courier New', Monaco, monospace;
+          border-radius: 4px;
+          font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Monaco, monospace;
           font-size: 0.9rem;
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--prism-border, #3e3e42);
         }
         
         blockquote {

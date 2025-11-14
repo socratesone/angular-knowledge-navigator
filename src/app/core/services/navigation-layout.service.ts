@@ -14,11 +14,7 @@ import {
 export class NavigationLayoutService {
   private breakpointObserver = inject(BreakpointObserver);
 
-  // Layout state signals
-  private layoutState = signal<NavigationLayout>(this.getDefaultLayout());
-  private isInitialized = signal<boolean>(false);
-
-  // Constants
+  // Constants (must be defined before signals that use them)
   private readonly MIN_WIDTH = 280;
   private readonly MAX_WIDTH = 480;
   private readonly DEFAULT_PERCENTAGE = 28;
@@ -27,9 +23,13 @@ export class NavigationLayoutService {
   private readonly DESKTOP_BREAKPOINT = '(min-width: 1024px)';
   private readonly STORAGE_KEY = 'angular-knowledge-nav-layout';
 
+  // Layout state signals (initialized after constants)
+  private layoutState = signal<NavigationLayout>(this.getDefaultLayout());
+  private isInitialized = signal<boolean>(false);
+
   // Observables
   private layoutSubject = new BehaviorSubject<NavigationLayout>(this.getDefaultLayout());
-  private resizeObserver$: Observable<number>;
+  private resizeObserver$!: Observable<number>;
 
   // Computed properties
   readonly currentLayout = computed(() => this.layoutState());
@@ -99,7 +99,9 @@ export class NavigationLayoutService {
         return;
       }
 
-      const viewportWidth = window.innerWidth;
+      const viewportWidth = (typeof window !== 'undefined' && window.innerWidth > 0) 
+        ? window.innerWidth 
+        : 1200; // Fallback for SSR or initialization issues
       const width = Math.round((percentage / 100) * viewportWidth);
       
       if (!this.isValidWidth(width)) {
@@ -268,7 +270,7 @@ export class NavigationLayoutService {
    * @returns True if width is valid
    */
   isValidWidth(width: number): boolean {
-    return width >= this.MIN_WIDTH && width <= this.MAX_WIDTH;
+    return !isNaN(width) && isFinite(width) && width >= this.MIN_WIDTH && width <= this.MAX_WIDTH;
   }
 
   /**
@@ -383,15 +385,23 @@ export class NavigationLayoutService {
    * @returns Default navigation layout
    */
   private getDefaultLayout(): NavigationLayout {
-    const viewportWidth = window.innerWidth;
-    const defaultWidth = Math.round((this.DEFAULT_PERCENTAGE / 100) * viewportWidth);
-    const constrainedWidth = Math.max(this.MIN_WIDTH, Math.min(this.MAX_WIDTH, defaultWidth));
+    // Fallback to a reasonable default if window is not available or has no width
+    const viewportWidth = (typeof window !== 'undefined' && window.innerWidth > 0) 
+      ? window.innerWidth 
+      : 1200; // Reasonable desktop default
+    
+    // Use fallback percentage in case of initialization order issues
+    const percentage = this.DEFAULT_PERCENTAGE || 28;
+    const defaultWidth = Math.round((percentage / 100) * viewportWidth);
+    const minWidth = this.MIN_WIDTH || 280;
+    const maxWidth = this.MAX_WIDTH || 480;
+    const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, defaultWidth));
 
     return {
       currentWidth: constrainedWidth,
-      widthPercentage: this.DEFAULT_PERCENTAGE,
-      minWidth: this.MIN_WIDTH,
-      maxWidth: this.MAX_WIDTH,
+      widthPercentage: percentage,
+      minWidth: minWidth,
+      maxWidth: maxWidth,
       isCollapsed: false,
       isResizable: true,
       breakpoint: LayoutBreakpoint.DESKTOP,
@@ -525,7 +535,9 @@ export class NavigationLayoutService {
    */
   autoAdjustLayout(): Observable<void> {
     return new Observable<void>(subscriber => {
-      const viewportWidth = window.innerWidth;
+      const viewportWidth = (typeof window !== 'undefined' && window.innerWidth > 0) 
+        ? window.innerWidth 
+        : 1200; // Fallback for SSR or initialization issues
       const currentLayout = this.layoutState();
       
       let optimalWidth = currentLayout.currentWidth;
