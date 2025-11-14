@@ -122,16 +122,19 @@ export class MarkdownProcessorService {
       const detectedLang = this.detectLanguage(code, lang);
       const codeId = this.generateCodeBlockId(codeBlocks.length);
       
+      // Clean code by removing random digit strings and artifacts
+      const cleanedCode = this.cleanCodeBlock(code);
+      
       // Parse code block metadata from comments or attributes
-      const metadata = this.parseCodeBlockMetadata(code, lang);
+      const metadata = this.parseCodeBlockMetadata(cleanedCode, lang);
       
       codeBlocks.push({
         id: codeId,
         language: lang,
         detectedLanguage: detectedLang,
-        code: code,
-        lineCount: code.split('\n').length,
-        showLineNumbers: metadata.showLineNumbers ?? (code.split('\n').length > 10),
+        code: cleanedCode,
+        lineCount: cleanedCode.split('\n').length,
+        showLineNumbers: metadata.showLineNumbers ?? (cleanedCode.split('\n').length > 10),
         ...metadata
       });
       
@@ -141,21 +144,21 @@ export class MarkdownProcessorService {
       
       try {
         if (targetLang && Prism.languages[targetLang]) {
-          highlightedCode = Prism.highlight(code, Prism.languages[targetLang], targetLang);
+          highlightedCode = Prism.highlight(cleanedCode, Prism.languages[targetLang], targetLang);
         } else {
-          highlightedCode = this.escapeHtml(code);
+          highlightedCode = this.escapeHtml(cleanedCode);
         }
       } catch (error) {
         console.warn(`Prism.js highlighting failed for language: ${targetLang}`, error);
-        highlightedCode = this.escapeHtml(code);
+        highlightedCode = this.escapeHtml(cleanedCode);
       }
       
       // Generate enhanced HTML with line numbers and metadata
       return this.generateEnhancedCodeBlock(highlightedCode, {
         id: codeId,
         language: targetLang,
-        lineCount: code.split('\n').length,
-        showLineNumbers: metadata.showLineNumbers ?? (code.split('\n').length > 10),
+        lineCount: cleanedCode.split('\n').length,
+        showLineNumbers: metadata.showLineNumbers ?? (cleanedCode.split('\n').length > 10),
         title: metadata.title,
         fileName: metadata.fileName,
         isCollapsible: metadata.isCollapsible,
@@ -257,6 +260,27 @@ export class MarkdownProcessorService {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Clean code blocks by removing random digit strings and rendering artifacts
+   */
+  private cleanCodeBlock(code: string): string {
+    return code
+      // Remove standalone digit sequences (3+ digits not part of code)
+      .replace(/^\d{3,}$/gm, '')
+      // Remove digit strings that appear above code samples (common pattern)
+      .replace(/^\d{3,}\n/gm, '')
+      // Remove lines that are only digits and whitespace
+      .replace(/^\s*\d{3,}\s*$/gm, '')
+      // Remove constitutional badges and development artifacts
+      .replace(/\[Constitutional[^\]]*\]/gi, '')
+      .replace(/\*\*Constitutional\*\*/gi, '')
+      // Remove TODO/FIXME/NOTE comments that aren't part of actual code
+      .replace(/^\s*(\/\/|#|<!--)\s*(TODO|FIXME|NOTE).*$/gm, '')
+      // Clean up excessive whitespace but preserve code indentation
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      .trim();
   }
 
   /**

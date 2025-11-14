@@ -23,17 +23,20 @@ export class ContentCleanupPipe implements PipeTransform {
     preserveEducationalValue: true
   };
 
-  /**
-   * Transform content by removing development artifacts
-   * @param content Raw content string
-   * @param options Cleanup configuration options
+    /**
+   * Transform content by applying cleanup rules
+   * @param content Content to clean up
+   * @param options Optional cleanup configuration
    * @returns Cleaned content string
    */
-  transform(content: string, options?: ContentCleanupOptions): string {
-    if (!content) return content;
+  transform(content: any, options?: ContentCleanupOptions): string {
+    if (!content) return '';
 
+    // Handle SafeHtml objects and convert to string
+    const contentString = typeof content === 'string' ? content : content.toString();
+    
     const config = { ...this.defaultOptions, ...options };
-    let cleanedContent = content;
+    let cleanedContent = contentString;
 
     try {
       // Apply cleanup operations in order

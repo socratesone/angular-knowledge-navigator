@@ -17,6 +17,7 @@ import { ArticleMetadata, TOCSection } from '../../shared/models/vocabulary.mode
 import { HighlightDirective, AdvancedHighlightDirective } from '../../shared/directives';
 import { CodeHighlighterComponent } from '../../shared/components/code-highlighter.component';
 import { ArticleHeaderComponent, TOCSelectionEvent } from '../../shared/components/article-header/article-header.component';
+import { ContentCleanupPipe } from '../../shared/pipes/content-cleanup.pipe';
 import { BestPracticesComponent } from './best-practices.component';
 import { CaveatsComponent } from './caveats.component';
 
@@ -37,6 +38,7 @@ import { CaveatsComponent } from './caveats.component';
     AdvancedHighlightDirective,
     CodeHighlighterComponent,
     ArticleHeaderComponent,
+    ContentCleanupPipe,
     BestPracticesComponent,
     CaveatsComponent
   ],
@@ -134,7 +136,7 @@ import { CaveatsComponent } from './caveats.component';
               class="markdown-content" 
               data-testid="content-body"
               aria-live="polite"
-              [innerHTML]="contentState().renderedHtml"
+              [innerHTML]="contentState().renderedHtml | contentCleanup"
             ></div>
             
             <!-- Code Examples -->
@@ -231,7 +233,7 @@ import { CaveatsComponent } from './caveats.component';
             <mat-card-title>Content Error</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <div [innerHTML]="contentState().renderedHtml"></div>
+            <div [innerHTML]="contentState().renderedHtml | contentCleanup"></div>
           </mat-card-content>
         </mat-card>
       }

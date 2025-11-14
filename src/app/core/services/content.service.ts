@@ -96,8 +96,8 @@ export class ContentService {
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
         scrollPosition: 0,
-        // Store frontmatter metadata for potential UI enhancements
-        metadata: processedContent.frontmatter
+        // Store filtered frontmatter metadata (educational fields only)
+        metadata: this.filterEducationalMetadata(processedContent.frontmatter)
       };
 
       this.currentContentSubject.next(contentState);
@@ -135,7 +135,7 @@ export class ContentService {
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
         scrollPosition: 0,
-        metadata: processedContent.frontmatter
+        metadata: this.filterEducationalMetadata(processedContent.frontmatter)
       };
 
       this.currentContentSubject.next(contentState);
@@ -767,5 +767,75 @@ export class ContentService {
       map(() => true),
       catchError(() => of(false))
     );
+  }
+
+  /**
+   * Filter frontmatter metadata to preserve educational fields while removing development metadata
+   * @param frontmatter Raw frontmatter object
+   * @returns Cleaned frontmatter with only educational content
+   */
+  private filterEducationalMetadata(frontmatter: any): any {
+    if (!frontmatter) {
+      return frontmatter;
+    }
+
+    // Educational fields to preserve
+    const educationalFields = [
+      'title',
+      'slug', 
+      'category',
+      'level',
+      'skillLevel',
+      'difficulty',
+      'estimatedReadingTime',
+      'readingTime',
+      'tags',
+      'keywords',
+      'description',
+      'summary',
+      'prerequisites',
+      'relatedTopics',
+      'nextTopic',
+      'learningObjectives',
+      'lastUpdated',
+      'contentPath'
+    ];
+
+    // Development/internal fields to remove
+    const developmentFields = [
+      'status',
+      'reviewers',
+      'pipeline_id',
+      'build_number',
+      'constitutional',
+      'internal_notes',
+      'dev_status',
+      'review_status',
+      'build_timestamp',
+      'ci_status',
+      'branch',
+      'commit_hash'
+    ];
+
+    const filtered: any = {};
+
+    // Copy educational fields
+    educationalFields.forEach(field => {
+      if (field in frontmatter) {
+        filtered[field] = frontmatter[field];
+      }
+    });
+
+    // Explicitly exclude development fields (defensive programming)
+    Object.keys(frontmatter).forEach(key => {
+      if (!developmentFields.includes(key) && !educationalFields.includes(key)) {
+        // Include unknown fields by default unless they look like development fields
+        if (!key.includes('_id') && !key.includes('_status') && !key.startsWith('ci_') && !key.startsWith('build_')) {
+          filtered[key] = frontmatter[key];
+        }
+      }
+    });
+
+    return filtered;
   }
 }

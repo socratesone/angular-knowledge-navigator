@@ -1,184 +1,348 @@
-// App Layout Component Styles
-// Complements the main app.component.scss grid layout
-
+// Responsive Layout with CSS Grid
 .app-layout {
-  // Mobile backdrop for overlay navigation
-  .mobile-backdrop {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  overflow: hidden;
+  position: relative;
+
+  // CSS Custom Properties for dynamic layout
+  --nav-width: 320px;
+  --nav-width-percentage: 28%;
+  --content-width: calc(100vw - var(--nav-width));
+  --content-width-percentage: 72%;
+  --layout-transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  --header-height: 64px;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  // Mobile Layout (< 768px)
+  @media (max-width: 767.98px) {
+    grid-template-areas: 
+      "header"
+      "content";
+    grid-template-rows: var(--header-height) 1fr;
+    grid-template-columns: 1fr;
+
+    &.nav-open {
+      grid-template-areas: 
+        "header"
+        "navigation"
+        "content";
+      grid-template-rows: var(--header-height) auto 1fr;
+    }
+  }
+
+  // Tablet Layout (768px - 1023px)
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    grid-template-areas: 
+      "header header"
+      "navigation content";
+    grid-template-rows: var(--header-height) 1fr;
+    grid-template-columns: 280px 1fr;
+
+    &.nav-collapsed {
+      grid-template-areas: 
+        "header header"
+        "content content";
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Desktop Layout (>= 1024px)
+  @media (min-width: 1024px) {
+    grid-template-areas: 
+      "header header"
+      "navigation content";
+    grid-template-rows: var(--header-height) 1fr;
+    grid-template-columns: var(--nav-width) 1fr;
+
+    &.nav-collapsed {
+      grid-template-areas: 
+        "header header"
+        "content content";
+      grid-template-columns: 1fr;
+    }
+
+    // Resizable layout
+    &.user-resizing {
+      transition: none;
+      
+      .navigation-panel,
+      .content-area {
+        transition: none;
+      }
+    }
+  }
+
+  // Transition animations
+  &.animated {
+    transition: var(--layout-transition);
+
+    .navigation-panel,
+    .content-area {
+      transition: var(--layout-transition);
+    }
+  }
+}
+
+// Header Area
+.app-header {
+  grid-area: header;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  z-index: 100;
+  position: relative;
+
+  .header-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .app-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .nav-toggle {
+      @media (min-width: 768px) {
+        display: none;
+      }
+    }
+
+    .layout-controls {
+      display: none;
+
+      @media (min-width: 768px) {
+        display: flex;
+        gap: 4px;
+      }
+    }
+  }
+}
+
+// Navigation Panel
+.navigation-panel {
+  grid-area: navigation;
+  background: #fafafa;
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 50;
+
+  // Mobile overlay behavior
+  @media (max-width: 767.98px) {
     position: fixed;
-    top: 0;
+    top: var(--header-height);
     left: 0;
     width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 150;
-    opacity: 0;
-    animation: backdrop-fade-in 0.3s ease-in-out forwards;
-    
-    @media (min-width: 768px) {
+    height: calc(100vh - var(--header-height));
+    z-index: 200;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+
+    &.open {
+      transform: translateY(0);
+    }
+  }
+
+  // Resize handle for desktop
+  .resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 10;
+    transition: background-color 0.2s ease;
+
+    &:hover,
+    &.dragging {
+      background: var(--primary-color, #1976d2);
+    }
+
+    @media (max-width: 1023.98px) {
       display: none;
     }
   }
 
-  @keyframes backdrop-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
+  // Navigation content container
+  .nav-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 0;
 
-  // Header enhancements
-  .app-header {
-    // Ensure header title elements are aligned horizontally
-    .header-title {
-      display: flex !important;
-      align-items: center !important;
-      gap: 12px !important;
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0;
-
-      h1 {
-        margin: 0;
-        font-size: inherit;
-        font-weight: inherit;
-      }
-
-      .app-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-
-      .nav-toggle {
-        flex-shrink: 0;
-      }
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 6px;
     }
 
-    .search-results-badge {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin: 0 8px;
-      min-width: 24px;
-      text-align: center;
-      
-      animation: badge-pulse 2s ease-in-out infinite;
+    &::-webkit-scrollbar-track {
+      background: transparent;
     }
 
-    @keyframes badge-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
 
-    .header-actions {
-      .search-toggle {
-        &.search-active {
-          background: rgba(255, 255, 255, 0.1);
-          color: #fff;
-        }
-      }
-
-      .reset-layout {
-        transition: transform 0.2s ease;
-
-        &:hover {
-          transform: rotate(90deg);
-        }
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
       }
     }
   }
+}
 
-  // Navigation panel enhancements
-  .navigation-panel {
-    .nav-content {
-      transition: opacity 0.3s ease-in-out;
-    }
+// Content Area
+.content-area {
+  grid-area: content;
+  background: white;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 
-    .search-section,
-    .navigation-section {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+  // Content padding and spacing
+  .content-wrapper {
+    flex: 1;
+    padding: 24px;
+    max-width: 1200px;
+    width: 100%;
 
-    .search-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    @media (max-width: 767.98px) {
       padding: 16px;
-      border-bottom: 1px solid var(--border-color, #e0e0e0);
-      background: inherit;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+    }
+  }
 
-      h3 {
-        margin: 0;
-        color: var(--primary-color, #1976d2);
-        font-weight: 600;
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a1a1a1;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 480px) {
+  .app-layout {
+    .app-header {
+      padding: 0 12px;
+
+      .header-title {
         font-size: 1.125rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      }
+    }
 
-        .header-icon {
-          width: 20px;
-          height: 20px;
-          opacity: 0.8;
-        }
+    .content-area .content-wrapper {
+      padding: 12px;
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .app-layout {
+    --border-color: #424242;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+
+    .navigation-panel {
+      background: #303030;
+      border-right-color: #424242;
+    }
+
+    .content-area {
+      background: #121212;
+      color: #e0e0e0;
+
+      &::-webkit-scrollbar-track {
+        background: #303030;
       }
 
-      .close-search {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        border-radius: 6px;
-        transition: all 0.15s ease-in-out;
+      &::-webkit-scrollbar-thumb {
+        background: #616161;
 
         &:hover {
-          background: var(--nav-hover-bg, rgba(25, 118, 210, 0.04));
-          transform: scale(1.05);
+          background: #757575;
         }
       }
     }
   }
+}
 
-  // Content area enhancements
-  .content-area {
-    .content-wrapper {
-      animation: content-fade-in 0.4s ease-out;
-    }
+// High contrast mode
+@media (prefers-contrast: high) {
+  .app-layout {
+    --border-color: #000000;
 
-    @keyframes content-fade-in {
-      from {
-        opacity: 0;
-        transform: translateY(16px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .navigation-panel {
+      border-right-width: 2px;
     }
   }
+}
 
-  // Dark theme adjustments
-  @media (prefers-color-scheme: dark) {
-    .mobile-backdrop {
-      background: rgba(0, 0, 0, 0.7);
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .app-layout,
+  .app-layout * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .navigation-panel {
+    transition: none !important;
+  }
+}
+
+// Print styles
+@media print {
+  .app-layout {
+    display: block;
+    height: auto;
+
+    .app-header,
+    .navigation-panel {
+      display: none;
     }
 
-    .search-header {
-      border-bottom-color: #424242;
-
-      h3 {
-        color: #90caf9;
-      }
+    .content-area {
+      overflow: visible;
     }
   }
 }
