@@ -13,13 +13,46 @@ import { NavigationService } from '../../core/services/navigation.service';
 import { MarkdownProcessorService } from '../../core/services/markdown-processor.service';
 import { SearchService } from '../../core/services/search.service';
 import { ContentState, LoadingStatus, BestPractice, Caveat, CodeExample } from '../../shared/models';
-import { ArticleMetadata, TOCSection } from '../../shared/models/vocabulary.model';
+import { ArticleMetadata, SkillLevel } from '../../shared/models/vocabulary.model';
 import { HighlightDirective, AdvancedHighlightDirective } from '../../shared/directives';
 import { CodeHighlighterComponent } from '../../shared/components/code-highlighter.component';
-import { ArticleHeaderComponent, TOCSelectionEvent } from '../../shared/components/article-header/article-header.component';
 import { ContentCleanupPipe } from '../../shared/pipes/content-cleanup.pipe';
 import { BestPracticesComponent } from './best-practices.component';
 import { CaveatsComponent } from './caveats.component';
+
+interface ArticleLevelBadgeView {
+  label: string;
+  icon: string;
+  cssClass: string;
+  progress: number;
+}
+
+const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssClass: string; order: number }> = {
+  [SkillLevel.FUNDAMENTALS]: {
+    label: 'Fundamentals',
+    icon: 'school',
+    cssClass: 'level-fundamentals',
+    order: 1
+  },
+  [SkillLevel.INTERMEDIATE]: {
+    label: 'Intermediate',
+    icon: 'trending_up',
+    cssClass: 'level-intermediate',
+    order: 2
+  },
+  [SkillLevel.ADVANCED]: {
+    label: 'Advanced',
+    icon: 'psychology',
+    cssClass: 'level-advanced',
+    order: 3
+  },
+  [SkillLevel.EXPERT]: {
+    label: 'Expert',
+    icon: 'star',
+    cssClass: 'level-expert',
+    order: 4
+  }
+};
 
 @Component({
   selector: 'app-content-viewer',
@@ -37,7 +70,6 @@ import { CaveatsComponent } from './caveats.component';
     HighlightDirective,
     AdvancedHighlightDirective,
     CodeHighlighterComponent,
-    ArticleHeaderComponent,
     ContentCleanupPipe,
     BestPracticesComponent,
     CaveatsComponent
@@ -52,15 +84,6 @@ import { CaveatsComponent } from './caveats.component';
       }
       
       @if (contentState().loadingStatus === LoadingStatus.Loaded) {
-        <!-- Article Header -->
-        <app-article-header
-          [metadata]="articleMetadata()"
-          [isLoading]="contentState().loadingStatus === LoadingStatus.Loading"
-          (tocSectionSelected)="onTOCSectionSelected($event)"
-          (tocToggled)="onTOCToggled($event)"
-          (sectionInView)="onSectionInView($event)">
-        </app-article-header>
-        
         <!-- Prerequisites Warning -->
         @if (hasUnmetPrerequisites()) {
           <mat-card class="prerequisites-warning">
@@ -86,24 +109,72 @@ import { CaveatsComponent } from './caveats.component';
 
         <!-- Main Content Card -->
         <mat-card class="content-card">
-          <mat-card-header>
-            <mat-card-title>{{ getTopicTitle() }}</mat-card-title>
-            <mat-card-subtitle>
-              <div class="content-meta">
-                <div data-testid="reading-time" class="reading-time">
-                  <mat-icon>schedule</mat-icon>
-                  {{ getEstimatedReadingTime() }} min read
+          <mat-card-header class="article-header-inline" data-testid="article-header">
+            <div class="header-top">
+              <div class="title-stack">
+                <div class="level-pill" *ngIf="getArticleLevelBadge() as levelBadge" [ngClass]="levelBadge.cssClass">
+                  <mat-icon>{{ levelBadge.icon }}</mat-icon>
+                  {{ levelBadge.label }}
                 </div>
-                @if (isConstitutionalTopic()) {
-                  <mat-chip class="constitutional-badge">
-                    <mat-icon>verified</mat-icon>
-                    Constitutional
-                  </mat-chip>
-                }
-                <mat-chip class="difficulty-chip">
-                  Level {{ getCurrentTopicDifficulty() }}
-                </mat-chip>
+                <mat-card-title>{{ getArticleTitle() }}</mat-card-title>
+                <p class="article-description" *ngIf="getArticleDescription() as description">{{ description }}</p>
               </div>
+              @if (hasTableOfContents()) {
+                <button
+                  type="button"
+                  mat-stroked-button
+                  class="toc-quick-button"
+                  (click)="scrollToTableOfContents()">
+                  <mat-icon>list</mat-icon>
+                  Jump to section
+                </button>
+              }
+            </div>
+            <mat-card-subtitle>
+              @if (hasHeaderMetadataBadges()) {
+                <div class="content-meta">
+                  <div class="meta-chip reading-time" *ngIf="getArticleReadingTimeLabel() as readingTime" data-testid="reading-time">
+                    <mat-icon>schedule</mat-icon>
+                    {{ readingTime }}
+                  </div>
+                  <div class="meta-chip level-chip" *ngIf="getArticleLevelBadge() as levelBadge" [ngClass]="levelBadge.cssClass">
+                    <mat-icon>{{ levelBadge.icon }}</mat-icon>
+                    {{ levelBadge.label }}
+                    <span class="level-progress" aria-hidden="true">
+                      <span class="progress-bar" [style.width.%]="levelBadge.progress"></span>
+                    </span>
+                  </div>
+                  @if (isConstitutionalTopic()) {
+                    <div class="meta-chip constitutional-badge">
+                      <mat-icon>verified</mat-icon>
+                      Constitutional
+                    </div>
+                  }
+                  @if (getCodeExampleCount() > 0) {
+                    <div class="meta-chip code-count-chip">
+                      <mat-icon>code</mat-icon>
+                      {{ getCodeExampleCount() }} {{ getCodeExampleCount() === 1 ? 'example' : 'examples' }}
+                    </div>
+                  }
+                  @if (hasInteractiveExamples()) {
+                    <div class="meta-chip interactive-chip">
+                      <mat-icon>play_circle</mat-icon>
+                      Interactive
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (getArticleTags().length > 0) {
+                <div class="article-tags">
+                  <mat-icon>sell</mat-icon>
+                  <div class="tags-list">
+                    @for (tag of getArticleTags(); track tag) {
+                      <span class="tag-chip">#{{ tag }}</span>
+                    }
+                  </div>
+                </div>
+              }
             </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
@@ -373,184 +444,6 @@ export class ContentViewerComponent implements OnInit {
   }
 
   /**
-   * Handle TOC section selection from ArticleHeaderComponent
-   */
-  onTOCSectionSelected(event: TOCSelectionEvent): void {
-    this.navigateToSection(event.sectionId, event.section.title);
-  }
-
-  /**
-   * Navigate to a specific section with enhanced handling
-   */
-  private navigateToSection(sectionId: string, sectionTitle?: string): void {
-    const targetElement = document.getElementById(sectionId);
-    
-    if (!targetElement) {
-      console.warn(`Section with ID "${sectionId}" not found`);
-      return;
-    }
-
-    // Calculate offset for fixed headers
-    const headerOffset = 80;
-    const elementPosition = targetElement.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-    // Smooth scroll with custom implementation for better control
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth'
-    });
-
-    // Update URL hash without triggering navigation
-    this.updateUrlHash(sectionId);
-    
-    // Focus the target element for accessibility
-    this.focusSection(targetElement);
-    
-    // Track navigation for analytics and user behavior
-    this.trackSectionNavigation(sectionId, sectionTitle);
-    
-    // Update any visual indicators
-    this.highlightCurrentSection(sectionId);
-  }
-
-  /**
-   * Update URL hash without triggering page navigation
-   */
-  private updateUrlHash(sectionId: string): void {
-    try {
-      const url = new URL(window.location.href);
-      url.hash = sectionId;
-      window.history.replaceState(null, '', url.toString());
-    } catch (error) {
-      console.warn('Failed to update URL hash:', error);
-    }
-  }
-
-  /**
-   * Focus section for accessibility
-   */
-  private focusSection(element: HTMLElement): void {
-    // Set tabindex temporarily if not focusable
-    const originalTabIndex = element.getAttribute('tabindex');
-    
-    if (!element.hasAttribute('tabindex')) {
-      element.setAttribute('tabindex', '-1');
-    }
-    
-    // Focus with a slight delay to ensure scroll is complete
-    setTimeout(() => {
-      element.focus({ preventScroll: true });
-      
-      // Restore original tabindex after focus
-      if (originalTabIndex === null) {
-        element.removeAttribute('tabindex');
-      } else {
-        element.setAttribute('tabindex', originalTabIndex);
-      }
-    }, 300);
-  }
-
-  /**
-   * Track section navigation for analytics
-   */
-  private trackSectionNavigation(sectionId: string, sectionTitle?: string): void {
-    const navigationData = {
-      sectionId,
-      sectionTitle: sectionTitle || 'Unknown Section',
-      articleId: this.currentTopicId(),
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      referrer: document.referrer
-    };
-
-    // Log for debugging (replace with actual analytics in production)
-    console.log('TOC Navigation:', navigationData);
-
-    // Example: Send to analytics service
-    // this.analyticsService.trackEvent('toc_navigation', navigationData);
-  }
-
-  /**
-   * Highlight current section visually
-   */
-  private highlightCurrentSection(sectionId: string): void {
-    // Remove previous highlights
-    document.querySelectorAll('.content-heading.active-section')
-      .forEach(el => el.classList.remove('active-section'));
-
-    // Add highlight to current section
-    const currentSection = document.getElementById(sectionId);
-    if (currentSection) {
-      currentSection.classList.add('active-section');
-    }
-  }
-
-  /**
-   * Handle TOC dropdown toggle
-   */
-  onTOCToggled(expanded: boolean): void {
-    console.log('TOC toggled:', expanded);
-    
-    // Track TOC usage for analytics
-    this.trackTOCUsage(expanded);
-  }
-
-  /**
-   * Handle section coming into view (from ArticleHeaderComponent)
-   */
-  onSectionInView(sectionId: string | null): void {
-    if (sectionId) {
-      this.highlightCurrentSection(sectionId);
-      this.updateUrlHash(sectionId);
-    }
-  }
-
-  /**
-   * Track TOC usage patterns
-   */
-  private trackTOCUsage(expanded: boolean): void {
-    const usageData = {
-      action: expanded ? 'toc_expanded' : 'toc_collapsed',
-      articleId: this.currentTopicId(),
-      timestamp: new Date().toISOString(),
-      sectionCount: this.articleMetadata()?.tableOfContents?.length || 0
-    };
-
-    console.log('TOC Usage:', usageData);
-  }
-
-  /**
-   * Initialize section intersection observer for auto-highlighting
-   */
-  private initializeSectionObserver(): void {
-    // This would be called if we want additional intersection-based highlighting
-    const options = {
-      root: null,
-      rootMargin: '-80px 0px -60% 0px', // Account for header offset
-      threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const sectionId = entry.target.id;
-          if (sectionId) {
-            this.highlightCurrentSection(sectionId);
-          }
-        }
-      });
-    }, options);
-
-    // Observe all headings
-    setTimeout(() => {
-      document.querySelectorAll('.content-heading[id]').forEach(heading => {
-        observer.observe(heading);
-      });
-    }, 1000); // Delay to ensure content is rendered
-  }
-
-  /**
    * Check if default content should be loaded
    */
   private shouldLoadDefaultContent(): boolean {
@@ -627,6 +520,97 @@ export class ContentViewerComponent implements OnInit {
            title.includes('onpush') || 
            title.includes('signals') ||
            title.includes('constitutional');
+  }
+
+  getArticleTitle(): string {
+    return this.articleMetadata()?.title || this.getTopicTitle();
+  }
+
+  getArticleDescription(): string | null {
+    return this.articleMetadata()?.description || null;
+  }
+
+  getArticleTags(): string[] {
+    return this.articleMetadata()?.tags || [];
+  }
+
+  getArticleReadingTimeLabel(): string | null {
+    const totalMinutes = this.getNormalizedReadingTime();
+    if (!totalMinutes) {
+      return null;
+    }
+
+    if (totalMinutes === 1) {
+      return '1 min read';
+    }
+
+    if (totalMinutes < 60) {
+      return `${totalMinutes} mins read`;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (minutes === 0) {
+      return `${hours}h read`;
+    }
+
+    return `${hours}h ${minutes}m read`;
+  }
+
+  getArticleLevelBadge(): ArticleLevelBadgeView | null {
+    const level = this.articleMetadata()?.level;
+    if (!level) {
+      return null;
+    }
+
+    const config = LEVEL_BADGE_CONFIG[level];
+    if (!config) {
+      return null;
+    }
+
+    return {
+      label: config.label,
+      icon: config.icon,
+      cssClass: config.cssClass,
+      progress: (config.order / 4) * 100
+    };
+  }
+
+  getCodeExampleCount(): number {
+    return this.articleMetadata()?.codeBlockCount ?? this.getCodeExamples().length;
+  }
+
+  hasInteractiveExamples(): boolean {
+    return this.articleMetadata()?.hasInteractiveExamples ?? false;
+  }
+
+  hasHeaderMetadataBadges(): boolean {
+    return Boolean(
+      this.getArticleReadingTimeLabel() ||
+      this.getArticleLevelBadge() ||
+      this.isConstitutionalTopic() ||
+      this.getCodeExampleCount() > 0 ||
+      this.hasInteractiveExamples()
+    );
+  }
+
+  scrollToTableOfContents(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const tocElement = document.querySelector('[data-testid="table-of-contents"]');
+    if (!tocElement) {
+      return;
+    }
+
+    tocElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  private getNormalizedReadingTime(): number | null {
+    const metadata = this.articleMetadata();
+    const minutes = metadata?.readingTime ?? metadata?.estimatedTime ?? this.getEstimatedReadingTime();
+    return minutes > 0 ? minutes : null;
   }
 
   getCurrentTopicDifficulty(): number {
