@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationService, NavigationNode, NodeType, SkillLevel } from '../../core/services/navigation.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
 
@@ -19,34 +18,15 @@ import { BreakpointService } from '../../core/services/breakpoint.service';
     MatIconModule,
     MatButtonModule,
     MatProgressBarModule,
-    MatSidenavModule,
-    MatToolbarModule
+    MatSidenavModule
   ],
   template: `
     <div class="navigation-tree" [class.mobile-layout]="breakpointService.isMobile()">
-      <!-- Mobile Header with Close Button -->
       @if (breakpointService.isMobile() && showMobileHeader) {
-        <mat-toolbar class="mobile-toolbar">
-          <span>Learning Path</span>
-          <span class="toolbar-spacer"></span>
+        <div class="mobile-toolbar">
           <button mat-icon-button (click)="closeMobileNavigation()" aria-label="Close navigation">
             <mat-icon>close</mat-icon>
           </button>
-        </mat-toolbar>
-      }
-
-      <!-- Desktop/Tablet Header -->
-      @if (!breakpointService.isMobile() || !showMobileHeader) {
-        <div class="tree-header">
-          <h3>Learning Path</h3>
-          <div class="tree-actions">
-            <button mat-icon-button (click)="expandAll()" title="Expand All">
-              <mat-icon>unfold_more</mat-icon>
-            </button>
-            <button mat-icon-button (click)="collapseAll()" title="Collapse All">
-              <mat-icon>unfold_less</mat-icon>
-            </button>
-          </div>
         </div>
       }
 

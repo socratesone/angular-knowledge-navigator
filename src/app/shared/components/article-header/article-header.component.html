@@ -18,7 +18,7 @@
       </h1>
       
       <!-- Article Metadata Tags  -->
-      <div class="article-tags" *ngIf="false && metadata.tags && metadata.tags.length > 0">
+      <div class="article-tags" *ngIf="metadata.tags && metadata.tags.length > 0">
         <mat-chip-set aria-label="Article tags">
           <mat-chip *ngFor="let tag of metadata.tags">
             {{ tag }}
@@ -28,8 +28,9 @@
      
     </div>
 
-    <!-- Header Badges and Info   -->
-    <div *ngIf="false" class="header-badges">
+    <div class="header-meta-row" *ngIf="hasBadgeMetadata() || (showTOC && hasTOC())">
+      <!-- Header Badges and Info -->
+      <div class="header-badges" *ngIf="hasBadgeMetadata()">
     
       <!-- Skill Level Badge -->
       <div *ngIf="showLevel && levelBadgeConfig()" 
@@ -86,7 +87,7 @@
     </div>
 
     <!-- Table of Contents Dropdown -->
-    <div *ngIf="false && showTOC && hasTOC()" 
+  <div *ngIf="showTOC && hasTOC()" 
          class="toc-dropdown-container">
       
       <!-- TOC Toggle Button -->
@@ -199,6 +200,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 

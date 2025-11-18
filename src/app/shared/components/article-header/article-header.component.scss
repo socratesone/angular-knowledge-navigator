@@ -68,37 +68,36 @@
 
 // Header Content Layout
 .header-content {
-  display: grid;
-  grid-template-areas: 
-    "title"
-    "badges"
-    "toc";
-  gap: 20px;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
 
-  @media (min-width: 768px) {
-    grid-template-areas: 
-      "title badges"
-      "toc toc";
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
+.header-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex: 1 1 320px;
+  min-width: 260px;
+  flex-wrap: wrap;
 
-  @media (min-width: 1024px) {
-    grid-template-areas: "title badges toc";
-    grid-template-columns: 1fr auto auto;
+  @media (max-width: 767px) {
+    justify-content: flex-start;
   }
 }
 
 // Article Title Section
 .article-title-section {
-  grid-area: title;
+  flex: 1 1 320px;
+  min-width: 260px;
   
   .article-title {
     font-size: 2rem;
     font-weight: 600;
-    margin: 0 0 12px 0;
-    color: var(--primary-text-color, #e6dcdc);
+    margin: 0;
+    color: #111111;
     line-height: 1.2;
     
     @media (max-width: 767px) {
@@ -124,15 +123,14 @@
 
 // Header Badges Container
 .header-badges {
-  grid-area: badges;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
 
-  @media (min-width: 768px) {
-    justify-content: flex-end;
+  @media (max-width: 767px) {
+    justify-content: flex-start;
   }
 
   // Make all badge containers inline and compact
@@ -244,14 +242,10 @@
 
 // TOC Dropdown Container
 .toc-dropdown-container {
-  grid-area: toc;
   position: relative;
-  width: 100%;
-
-  @media (min-width: 1024px) {
-    width: auto;
-    min-width: 280px;
-  }
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 220px;
 }
 
 // TOC Toggle Button
@@ -265,7 +259,7 @@
   background: white;
   color: var(--text-color, #424242);
   font-weight: 500;
-  width: 100%;
+  width: auto;
   justify-content: space-between;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
@@ -297,8 +291,12 @@
     margin-left: auto;
   }
 
+  @media (max-width: 767px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   @media (min-width: 1024px) {
-    width: auto;
     min-width: 240px;
   }
 }

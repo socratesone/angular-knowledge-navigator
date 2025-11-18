@@ -1,37 +1,62 @@
 ---
-title: "TOPIC_TITLE"
-slug: "TOPIC_SLUG"
+title: "Introduction to Observables and RxJS"
+slug: "introduction-to-observables-and-rxjs"
 category: "Fundamentals"
 skillLevel: "fundamentals"
-difficulty: 2
-estimatedReadingTime: 20
+difficulty: 3
+estimatedReadingTime: 18
 constitutional: false
-tags: ["fundamentals", "TOPIC_TAG"]
-prerequisites: []
-relatedTopics: []
-lastUpdated: "2025-11-11"
-contentPath: "/assets/concepts/fundamentals/TOPIC_SLUG.md"
+tags: ["rxjs", "observables", "async"]
+prerequisites: ["fundamentals/handling-user-input-and-validation"]
+relatedTopics: ["fundamentals/routing-and-navigation-basics"]
+lastUpdated: "2025-11-17"
+contentPath: "/assets/concepts/fundamentals/introduction-to-observables-and-rxjs.md"
 ---
 
-# TOPIC_TITLE
+# Introduction to Observables and RxJS
+
+Observables are Angular's lingua franca for anything asynchronous—HTTP requests, router events, WebSockets, gestures, and custom streams. RxJS extends the Observable contract with over 100 operators that let you transform, merge, and throttle events without manual state machines.
 
 ## Learning Objectives
-This topic covers essential TOPIC_TITLE concepts for Angular development.
 
-## Overview
-Comprehensive coverage of TOPIC_TITLE with practical examples and best practices.
+- Understand how Observables differ from Promises
+- Create Observables from DOM events, timers, and application state
+- Compose operators to debounce input and cancel inflight HTTP calls
+- Subscribe responsibly to avoid memory leaks
 
-## Key Concepts
-- Fundamental concepts and patterns
-- Real-world implementation examples
-- Performance considerations
-- Best practices and common pitfalls
+## Observable Lifecycle
 
-## Constitutional Alignment
-How this topic supports modern Angular constitutional practices.
+1. **Creation** – `of`, `from`, `interval`, and `fromEvent` convert data sources into Observables.
+2. **Transformation** – Operators like `map`, `filter`, `switchMap`, and `takeUntil` are chained via `.pipe()`.
+3. **Subscription** – Consumers call `.subscribe()` to start the stream. Angular also subscribes for you in templates via the `async` pipe.
+4. **Teardown** – Observables can complete or you can dispose them manually using `Subscription.unsubscribe()` or `takeUntil`.
+
+```ts
+const search$ = fromEvent(searchInput.nativeElement, 'input').pipe(
+	map((event: Event) => (event.target as HTMLInputElement).value.trim()),
+	debounceTime(250),
+	distinctUntilChanged(),
+	switchMap((term) => this.searchService.lookup(term))
+);
+
+search$.subscribe(results => this.matches.set(results));
+```
+
+## Best Practices
+
+- Prefer the `async` pipe in templates; it handles subscription lifecycles automatically.
+- Use **higher-order mapping operators** intentionally:
+	- `switchMap` cancels previous requests—ideal for live search.
+	- `mergeMap` keeps every inner stream—great for fire-and-forget analytics.
+	- `concatMap` preserves order—perfect for queued writes.
+- Guard long-lived subscriptions with `takeUntil(destroy$)` or the `DestroyRef` helpers in Angular 17.
+
+## Debugging Tips
+
+- Enable the [RxJS devtools](https://rxjs.dev/tools/augury) or insert `tap(console.log)` temporarily to observe emissions.
+- Log `next`, `error`, and `complete` handlers separately so you know which phase fired.
 
 ## Next Steps
-Related topics to explore after mastering this concept.
 
-## Expansion Guidance for LLMs
-This stub provides the foundation for comprehensive content expansion covering all aspects of TOPIC_TITLE in Angular development.
+- Explore the [Higher-order Observable](https://rxjs.dev/guide/observable) guide to master flattening strategies.
+- Combine Observables with the Angular router to react to param changes in `ngOnInit`.

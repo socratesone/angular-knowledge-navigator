@@ -110,10 +110,7 @@ export class MarkdownProcessorService {
       
       // Enhanced heading with accessibility and navigation attributes
       return `<h${level} id="${uniqueId}" class="content-heading level-${level}" tabindex="-1" data-toc-anchor="${uniqueId}">
-        <a href="#${uniqueId}" class="heading-anchor" aria-label="Link to ${text}" title="Link to this section">
-          <span class="heading-text">${text}</span>
-          <span class="anchor-icon" aria-hidden="true">#</span>
-        </a>
+        <span class="heading-text">${text}</span>
       </h${level}>`;
     };
 

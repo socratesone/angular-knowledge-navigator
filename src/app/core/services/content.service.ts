@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, SecurityContext } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
@@ -52,7 +52,7 @@ export class ContentService {
     return this.http.get(contentPath, { responseType: 'text' }).pipe(
       map(markdown => {
         this.contentCache.set(topicId, markdown);
-        return this.processMarkdownSync(markdown, topicId);
+  return this.processMarkdownSync(markdown, topicId);
       }),
       catchError(error => {
         const contentError: ContentError = {
@@ -88,11 +88,12 @@ export class ContentService {
 
       // Use our enhanced markdown processor with frontmatter support
       const processedContent = this.markdownProcessor.processMarkdown(cleanedMarkdown);
+      const renderedHtml = this.toHtmlString(processedContent.html);
       
       const contentState: ContentState = {
         topicId,
         markdown: cleanedMarkdown,
-        renderedHtml: processedContent.html,
+        renderedHtml: renderedHtml,
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
         scrollPosition: 0,
@@ -127,11 +128,12 @@ export class ContentService {
 
       // Use our enhanced markdown processor with frontmatter support
       const processedContent = this.markdownProcessor.processMarkdown(processedMarkdown);
+      const renderedHtml = this.toHtmlString(processedContent.html);
       
       const contentState: ContentState = {
         topicId,
         markdown: processedMarkdown,
-        renderedHtml: processedContent.html,
+        renderedHtml,
         loadingStatus: LoadingStatus.Loaded,
         lastLoaded: new Date(),
         scrollPosition: 0,
@@ -151,7 +153,7 @@ export class ContentService {
       const errorState: ContentState = {
         topicId,
         markdown: '',
-        renderedHtml: this.createErrorContent(contentError),
+          renderedHtml: this.createErrorContent(contentError),
         loadingStatus: LoadingStatus.Error,
         error: contentError,
         lastLoaded: new Date(),
@@ -237,7 +239,7 @@ export class ContentService {
   /**
    * Create error content HTML
    */
-  private createErrorContent(error: ContentError): SafeHtml {
+  private createErrorContent(error: ContentError): string {
     const errorHtml = `
       <div class="error-content">
         <h2>⚠️ Content Error</h2>
@@ -248,7 +250,19 @@ export class ContentService {
       </div>
     `;
     
-    return this.sanitizer.bypassSecurityTrustHtml(errorHtml);
+    return errorHtml;
+  }
+
+  private toHtmlString(value: SafeHtml | string): string {
+    if (!value) {
+      return '';
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return this.sanitizer.sanitize(SecurityContext.HTML, value) ?? '';
   }
 
   /**

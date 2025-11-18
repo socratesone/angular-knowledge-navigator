@@ -118,7 +118,7 @@ export class AppComponent {}
         expect(contentState.renderedHtml).toBeTruthy();
         
         // Check that HTML contains processed content
-        const htmlString = contentState.renderedHtml.toString();
+  const htmlString = contentState.renderedHtml as string;
         expect(htmlString).toContain('<h1');
         expect(htmlString).toContain('Introduction to Angular');
         expect(htmlString).toContain('<pre');

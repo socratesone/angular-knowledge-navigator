@@ -140,6 +140,15 @@ export class ArticleHeaderComponent implements OnInit, OnDestroy {
     return this.metadata?.hasInteractiveExamples || false;
   });
 
+  hasBadgeMetadata(): boolean {
+    return (
+      (this.showLevel && !!this.levelBadgeConfig()) ||
+      (this.showReadingTime && !!this.readingTimeDisplay()) ||
+      this.codeBlockCount() > 0 ||
+      this.hasCodeExamples()
+    );
+  }
+
   /**
    * Toggle TOC dropdown visibility
    */

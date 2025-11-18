@@ -244,10 +244,6 @@
       }
     }
 
-    // Firefox scrollbar
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-
     .node-item {
       margin-bottom: 0.5rem;
 
@@ -478,8 +474,6 @@
         }
       }
 
-      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-
       &::before {
         background: linear-gradient(to bottom, #fafafa, transparent);
       }
@@ -545,6 +539,76 @@
 
     .tree-header .tree-actions {
       display: none;
+    }
+  }
+}
+
+/* Neutral palette overrides */
+.navigation-tree {
+  background: #ffffff;
+  color: #111111;
+  border-right: 1px solid #d4d4d4;
+  --primary-color: #111111;
+  --nav-hover-bg: rgba(0, 0, 0, 0.04);
+  --nav-active-bg: rgba(0, 0, 0, 0.08);
+  --nav-focus-outline: 2px solid rgba(0, 0, 0, 0.4);
+
+  .tree-content {
+    color: inherit;
+  }
+
+  .category-button {
+    color: inherit;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    &.expanded {
+      background-color: rgba(0, 0, 0, 0.08);
+      color: inherit;
+    }
+  }
+
+  .topic-node {
+    color: inherit;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    &.selected {
+      background-color: #111111;
+      color: #ffffff;
+
+      .topic-icon,
+      .constitutional-badge {
+        color: #ffffff;
+      }
+    }
+
+    .topic-icon {
+      color: #444444;
+    }
+  }
+
+  .node-item .category-button .topic-count {
+    color: #555555;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .navigation-tree {
+    .mobile-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: inherit;
+
+      button {
+        color: inherit;
+      }
     }
   }
 }
