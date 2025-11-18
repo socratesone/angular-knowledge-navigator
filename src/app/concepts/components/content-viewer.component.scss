@@ -1,20 +1,20 @@
 .content-viewer {
-  padding: 1rem;
+  padding: 0rem;
   max-width: 1200px;
   margin: 0 auto;
   
   // Mobile-first responsive padding
   @media (max-width: 767.98px) {
-    padding: 0.75rem;
+    padding: 0rem;
     max-width: 100%;
   }
   
   @media (min-width: 768px) and (max-width: 1023.98px) {
-    padding: 1.5rem;
+    padding: 0rem;
   }
   
   @media (min-width: 1024px) {
-    padding: 2rem;
+    padding: 0rem;
   }
 
   .loading-container {

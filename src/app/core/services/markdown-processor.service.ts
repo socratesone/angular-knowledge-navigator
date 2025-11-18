@@ -80,11 +80,12 @@ export class MarkdownProcessorService {
    * Process markdown content into safe HTML with metadata
    */
   processMarkdown(markdown: string): ProcessedContent {
+    const sourceMarkdown = typeof markdown === 'string' ? markdown : '';
     const headings: ContentHeading[] = [];
     const codeBlocks: CodeBlock[] = [];
     
     // Extract frontmatter and clean content
-    const { content: cleanMarkdown, frontmatter } = this.extractFrontmatter(markdown);
+    const { content: cleanMarkdown, frontmatter } = this.extractFrontmatter(sourceMarkdown);
     
     // Configure renderer to extract metadata
     const renderer = new marked.Renderer();
@@ -172,7 +173,7 @@ export class MarkdownProcessorService {
       gfm: true
     });
 
-    const html = marked(cleanMarkdown) as string;
+  const html = marked(cleanMarkdown) as string;
     const safeHtml = this.sanitizer.bypassSecurityTrustHtml(html);
     
     return {

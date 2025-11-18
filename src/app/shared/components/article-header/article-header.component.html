@@ -17,19 +17,20 @@
         {{ articleTitle() }}
       </h1>
       
-      <!-- Article Metadata Tags -->
-      <div class="article-tags" *ngIf="metadata.tags && metadata.tags.length > 0">
+      <!-- Article Metadata Tags  -->
+      <div class="article-tags" *ngIf="false && metadata.tags && metadata.tags.length > 0">
         <mat-chip-set aria-label="Article tags">
           <mat-chip *ngFor="let tag of metadata.tags">
             {{ tag }}
           </mat-chip>
         </mat-chip-set>
       </div>
+     
     </div>
 
-    <!-- Header Badges and Info -->
-    <div class="header-badges">
-      
+    <!-- Header Badges and Info   -->
+    <div *ngIf="false" class="header-badges">
+    
       <!-- Skill Level Badge -->
       <div *ngIf="showLevel && levelBadgeConfig()" 
            class="level-badge-container">
@@ -41,13 +42,14 @@
           {{ levelBadgeConfig()!.label }}
         </mat-chip>
         
-        <!-- Level Progress Indicator -->
+        <!-- Level Progress Indicator  -->
         <div class="level-progress" 
              [attr.aria-hidden]="true">
           <div class="progress-bar" 
                [style.width.%]="levelProgress()">
           </div>
         </div>
+       
       </div>
 
       <!-- Reading Time Badge -->
@@ -60,7 +62,7 @@
         </mat-chip>
       </div>
 
-      <!-- Code Examples Indicator -->
+      <!-- Code Examples Indicator  -->
       <div *ngIf="codeBlockCount() > 0" 
            class="code-examples-badge">
         <mat-chip [matTooltip]="codeBlockCount() + ' code examples included'"
@@ -80,10 +82,11 @@
           Interactive
         </mat-chip>
       </div>
+
     </div>
 
     <!-- Table of Contents Dropdown -->
-    <div *ngIf="showTOC && hasTOC()" 
+    <div *ngIf="false && showTOC && hasTOC()" 
          class="toc-dropdown-container">
       
       <!-- TOC Toggle Button -->

@@ -448,10 +448,14 @@
 
 // Enhanced theme and accessibility support
 .navigation-tree {
-  // Dark theme support
+  // Force light theme for navigation
+  background: #fafafa !important;
+  border-right-color: var(--border-color, #e0e0e0) !important;
+  
+  // Dark theme support (disabled for now to ensure light navigation)
   @media (prefers-color-scheme: dark) {
-    background: #303030;
-    border-right-color: #424242;
+    background: #fafafa !important;
+    border-right-color: var(--border-color, #e0e0e0) !important;
 
     --nav-hover-bg: rgba(144, 202, 249, 0.08);
     --nav-active-bg: rgba(144, 202, 249, 0.12);
@@ -477,11 +481,11 @@
       scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 
       &::before {
-        background: linear-gradient(to bottom, #303030, transparent);
+        background: linear-gradient(to bottom, #fafafa, transparent);
       }
 
       &::after {
-        background: linear-gradient(to top, #303030, transparent);
+        background: linear-gradient(to top, #fafafa, transparent);
       }
     }
 

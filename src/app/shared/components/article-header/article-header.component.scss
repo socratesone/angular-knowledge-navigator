@@ -4,7 +4,7 @@
 .article-header {
   background: var(--surface-color, #fafafa);
   border-bottom: 1px solid var(--border-color, #e0e0e0);
-  padding: 24px;
+  padding: 0em;
   margin-bottom: 32px;
   border-radius: 8px 8px 0 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -98,7 +98,7 @@
     font-size: 2rem;
     font-weight: 600;
     margin: 0 0 12px 0;
-    color: var(--primary-text-color, #212121);
+    color: var(--primary-text-color, #e6dcdc);
     line-height: 1.2;
     
     @media (max-width: 767px) {
@@ -107,9 +107,17 @@
   }
 
   .article-tags {
+    mat-chip-set {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    
     mat-chip {
       font-size: 0.75rem;
-      height: 24px;
+      height: 28px;
+      padding: 0 8px;
+      font-weight: 500;
     }
   }
 }
@@ -119,7 +127,7 @@
   grid-area: badges;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   justify-content: flex-start;
 
@@ -127,14 +135,29 @@
     justify-content: flex-end;
   }
 
+  // Make all badge containers inline and compact
+  .level-badge-container,
+  .reading-time-badge,
+  .code-examples-badge,
+  .interactive-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+}
+
 // Level Badge Container
 .level-badge-container {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 
   mat-chip {
+    font-size: 0.75rem;
+    height: 28px;
+    padding: 0 8px;
+    font-weight: 500;
     transition: all 0.2s ease-in-out;
     
     &:hover {
@@ -164,11 +187,12 @@
   }
 
   .level-progress {
-    width: 100%;
+    width: 40px;
     height: 3px;
     background-color: rgba(0, 0, 0, 0.1);
     border-radius: 2px;
     overflow: hidden;
+    margin-left: 4px;
 
     .progress-bar {
       height: 100%;
@@ -190,6 +214,10 @@
 .code-examples-badge,
 .interactive-badge {
   mat-chip {
+    font-size: 0.75rem;
+    height: 28px;
+    padding: 0 8px;
+    font-weight: 500;
     transition: all 0.2s ease-in-out;
     
     &:hover {
@@ -212,7 +240,6 @@
 .interactive-badge mat-chip {
   background-color: #4caf50;
   color: white;
-}
 }
 
 // TOC Dropdown Container

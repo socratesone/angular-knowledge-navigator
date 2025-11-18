@@ -1,3 +1,4 @@
+import { expect, jest } from '@jest/globals';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -181,12 +182,14 @@ export class AppComponent {}
       const topicId = 'fundamentals/data-binding';
       const states: LoadingStatus[] = [];
 
-      service.currentContent$.subscribe(contentState => {
+      const subscription = service.currentContent$.subscribe(contentState => {
         states.push(contentState.loadingStatus);
         
-        if (states.length === 2) {
-          expect(states[0]).toBe(LoadingStatus.Loading);
-          expect(states[1]).toBe(LoadingStatus.Loaded);
+        if (states.length === 3) {
+          expect(states[0]).toBe(LoadingStatus.Idle);
+          expect(states[1]).toBe(LoadingStatus.Loading);
+          expect(states[2]).toBe(LoadingStatus.Loaded);
+          subscription.unsubscribe();
           done();
         }
       });
@@ -199,22 +202,28 @@ export class AppComponent {}
 
     it('should maintain reactive state across multiple subscriptions', (done) => {
       const topicId = 'fundamentals/directives';
-      let subscriptionCount = 0;
+      const loadedBy = new Set<string>();
 
-      // Multiple subscribers
-      service.currentContent$.subscribe(contentState => {
-        subscriptionCount++;
-        if (subscriptionCount === 2 && contentState.loadingStatus === LoadingStatus.Loaded) {
-          expect(contentState.topicId).toBe(topicId);
-          done();
+      const sub1 = service.currentContent$.subscribe(contentState => {
+        if (contentState.loadingStatus === LoadingStatus.Loaded) {
+          loadedBy.add('first');
         }
       });
 
-      service.currentContent$.subscribe(() => {
-        subscriptionCount++;
+      const sub2 = service.currentContent$.subscribe(contentState => {
+        if (contentState.loadingStatus === LoadingStatus.Loaded) {
+          loadedBy.add('second');
+        }
       });
 
-      service.loadContent(topicId).subscribe();
+      service.loadContent(topicId).subscribe(contentState => {
+        expect(contentState.topicId).toBe(topicId);
+        expect(loadedBy.has('first')).toBe(true);
+        expect(loadedBy.has('second')).toBe(true);
+        sub1.unsubscribe();
+        sub2.unsubscribe();
+        done();
+      });
 
       const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('# Directives\n\nCustom directives in Angular.');
@@ -233,7 +242,7 @@ export class AppComponent {}
         // Verify all content is cached
         const cacheInfo = service.getCacheInfo();
         expect(cacheInfo.size).toBe(3);
-        expect(cacheInfo.topics).toEqual(jasmine.arrayContaining(topicIds));
+  expect(cacheInfo.topics).toEqual(expect.arrayContaining(topicIds));
         done();
       });
 
