@@ -433,10 +433,10 @@ export class ContentService {
       ],
       'intermediate': [
         'intermediate/angular-signals',
-        'intermediate/component-communication'
+        'intermediate/component-communication-input-output-viewchild-service-based'
       ],
       'advanced': [
-        'advanced/change-detection-strategies',
+  'advanced/optimizing-change-detection-and-performance',
         'advanced/lazy-loading'
       ],
       'expert': [
@@ -473,10 +473,10 @@ export class ContentService {
     // Define prerequisite relationships
     const prerequisites: { [key: string]: string[] } = {
       'intermediate/angular-signals': ['fundamentals/components-and-templates', 'fundamentals/data-binding'],
-      'intermediate/component-communication': ['fundamentals/components-and-templates'],
-      'advanced/change-detection-strategies': ['intermediate/angular-signals'],
+  'intermediate/component-communication-input-output-viewchild-service-based': ['fundamentals/components-and-templates'],
+  'advanced/optimizing-change-detection-and-performance': ['intermediate/angular-signals'],
       'advanced/lazy-loading': ['fundamentals/introduction-to-angular'],
-      'expert/angular-constitution-and-best-practices': ['advanced/change-detection-strategies']
+  'expert/angular-constitution-and-best-practices': ['advanced/optimizing-change-detection-and-performance']
     };
     
     return prerequisites[topicId] || [];

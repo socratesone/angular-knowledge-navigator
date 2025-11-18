@@ -1,16 +1,16 @@
 ---
 title: "Advanced NgRx (Selectors, Effects, Entity Management)"
 slug: "advanced-ngrx-selectors-effects-entity-management"
-category: "Advanced" 
-skillLevel: "advanced"
+category: "Expert"
+skillLevel: "expert"
 difficulty: 4
 estimatedReadingTime: 40
-constitutional: false
+constitutional: true
 tags: ["advanced", "ngrx", "state-management", "selectors", "effects", "entities"]
 prerequisites: ["reactive-state-management-rxjs-componentstore-ngrx-introduction", "using-rxjs-operators-map-filter-switchmap-etc", "optimizing-change-detection-and-performance"]
 relatedTopics: ["signals-and-modern-reactivity-model-angular-17", "smart-vs-presentational-components-pattern", "unit-testing-with-jest-and-angular-testing-library"]
-lastUpdated: "2025-11-11"
-contentPath: "/assets/concepts/advanced/advanced-ngrx-selectors-effects-entity-management.md"
+lastUpdated: "2025-11-18"
+contentPath: "/assets/concepts/expert/advanced-ngrx-selectors-effects-entity-management.md"
 ---
 
 # Advanced NgRx (Selectors, Effects, Entity Management)

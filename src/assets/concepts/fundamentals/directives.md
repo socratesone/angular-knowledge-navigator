@@ -745,7 +745,7 @@ export class TrackerDemoComponent {
 ## Next Steps
 
 - Learn about [Services and Dependency Injection](services-and-dependency-injection)
-- Explore [Component Communication](../intermediate/component-communication)
+- Explore [Component Communication](../intermediate/component-communication-input-output-viewchild-service-based)
 - Discover [Forms and Validation](forms-and-validation)
 
 ---

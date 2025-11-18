@@ -377,14 +377,14 @@ export class NavigationService {
     const prerequisiteMap: { [key: string]: string[] } = {
       // Intermediate topics require fundamentals
       'intermediate/angular-signals': ['fundamentals/components-and-templates', 'fundamentals/data-binding'],
-      'intermediate/component-communication': ['fundamentals/components-and-templates'],
+  'intermediate/component-communication-input-output-viewchild-service-based': ['fundamentals/components-and-templates'],
       
       // Advanced topics require intermediate knowledge
-      'advanced/change-detection-strategies': ['intermediate/angular-signals', 'fundamentals/components-and-templates'],
-      'advanced/lazy-loading': ['fundamentals/introduction-to-angular', 'intermediate/component-communication'],
+  'advanced/optimizing-change-detection-and-performance': ['intermediate/angular-signals', 'fundamentals/components-and-templates'],
+  'advanced/lazy-loading': ['fundamentals/introduction-to-angular', 'intermediate/component-communication-input-output-viewchild-service-based'],
       
       // Expert topics require advanced knowledge
-      'expert/angular-constitution-and-best-practices': ['advanced/change-detection-strategies', 'advanced/lazy-loading']
+  'expert/angular-constitution-and-best-practices': ['advanced/optimizing-change-detection-and-performance', 'advanced/lazy-loading']
     };
 
     return prerequisiteMap[topicId] || [];

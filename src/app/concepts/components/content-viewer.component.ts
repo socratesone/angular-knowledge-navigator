@@ -110,26 +110,6 @@ const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssC
         <!-- Main Content Card -->
         <mat-card class="content-card">
           <mat-card-header class="article-header-inline" data-testid="article-header">
-            <div class="header-top">
-              <div class="title-stack">
-                <div class="level-pill" *ngIf="getArticleLevelBadge() as levelBadge" [ngClass]="levelBadge.cssClass">
-                  <mat-icon>{{ levelBadge.icon }}</mat-icon>
-                  {{ levelBadge.label }}
-                </div>
-                <mat-card-title>{{ getArticleTitle() }}</mat-card-title>
-                <p class="article-description" *ngIf="getArticleDescription() as description">{{ description }}</p>
-              </div>
-              @if (hasTableOfContents()) {
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="toc-quick-button"
-                  (click)="scrollToTableOfContents()">
-                  <mat-icon>list</mat-icon>
-                  Jump to section
-                </button>
-              }
-            </div>
             <mat-card-subtitle>
               @if (hasHeaderMetadataBadges()) {
                 <div class="content-meta">
@@ -162,6 +142,30 @@ const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssC
                       Interactive
                     </div>
                   }
+                  
+                  <!-- Table of Contents -->
+                  @if (hasTableOfContents()) {
+                    <div class="table-of-contents" data-testid="table-of-contents">
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon>list</mat-icon>
+                            Table of Contents
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <nav>
+                          <ul>
+                            @for (heading of getTableOfContents(); track heading.id) {
+                              <li [class]="'toc-level-' + heading.level">
+                                <a [href]="'#' + heading.id">{{ heading.text }}</a>
+                              </li>
+                            }
+                          </ul>
+                        </nav>
+                      </mat-expansion-panel>
+                    </div>
+                  }
+                  
                 </div>
               }
 
@@ -173,35 +177,14 @@ const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssC
                       <span class="tag-chip">#{{ tag }}</span>
                     }
                   </div>
+                  
                 </div>
               }
+              
             </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            
-            <!-- Table of Contents -->
-            @if (hasTableOfContents()) {
-              <div class="table-of-contents" data-testid="table-of-contents">
-                <mat-expansion-panel>
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
-                      <mat-icon>list</mat-icon>
-                      Table of Contents
-                    </mat-panel-title>
-                  </mat-expansion-panel-header>
-                  <nav>
-                    <ul>
-                      @for (heading of getTableOfContents(); track heading.id) {
-                        <li [class]="'toc-level-' + heading.level">
-                          <a [href]="'#' + heading.id">{{ heading.text }}</a>
-                        </li>
-                      }
-                    </ul>
-                  </nav>
-                </mat-expansion-panel>
-              </div>
-            }
-
+           
             <!-- Main Content -->
             <div 
               class="markdown-content" 
@@ -670,7 +653,7 @@ export class ContentViewerComponent implements OnInit {
   private getMockCaveats(topicId: string): Caveat[] {
     // Mock caveats for demonstration
     const caveatMap: { [key: string]: Caveat[] } = {
-      'advanced/change-detection-strategies': [
+  'advanced/optimizing-change-detection-and-performance': [
         {
           id: 'onpush-caveat',
           title: 'OnPush with Mutable Objects',

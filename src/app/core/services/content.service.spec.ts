@@ -165,7 +165,7 @@ export class AppComponent {}
     });
 
     it('should support deep topic paths', (done) => {
-      const complexTopicId = 'advanced/performance/change-detection-strategies';
+  const complexTopicId = 'advanced/performance/optimizing-change-detection-and-performance';
 
       service.loadContent(complexTopicId).subscribe(contentState => {
         expect(contentState.topicId).toBe(complexTopicId);
@@ -173,7 +173,7 @@ export class AppComponent {}
       });
 
       const req = httpMock.expectOne(`assets/concepts/${complexTopicId}.md`);
-      req.flush('# Change Detection Strategies');
+  req.flush('# Optimizing Change Detection and Performance');
     });
   });
 
