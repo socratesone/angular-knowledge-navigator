@@ -144,7 +144,7 @@ const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssC
                   }
                   
                   <!-- Table of Contents -->
-                  @if (hasTableOfContents()) {
+                  @if (false && hasTableOfContents()) {
                     <div class="table-of-contents" data-testid="table-of-contents">
                       <mat-expansion-panel>
                         <mat-expansion-panel-header>
@@ -169,7 +169,7 @@ const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssC
                 </div>
               }
 
-              @if (getArticleTags().length > 0) {
+              @if (false && getArticleTags().length > 0) {
                 <div class="article-tags">
                   <mat-icon>sell</mat-icon>
                   <div class="tags-list">
