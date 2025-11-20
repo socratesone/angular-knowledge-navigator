@@ -1,3 +1,18 @@
+---
+title: "Component Communication (Input, Output, ViewChild, Service-based)"
+slug: "component-communication-input-output-viewchild-service-based"
+category: "Intermediate"
+skillLevel: "intermediate"
+difficulty: 3
+estimatedReadingTime: 35
+constitutional: true
+tags: ["component-communication", "inputs", "outputs", "viewchild", "services"]
+prerequisites: ["components-and-templates", "event-binding-and-two-way-data-binding", "services-and-providers"]
+relatedTopics: ["change-detection-strategy-default-vs-onpush", "lazy-loading-feature-modules", "angular-signals"]
+lastUpdated: "2025-11-18"
+contentPath: "/assets/concepts/intermediate/component-communication-input-output-viewchild-service-based.md"
+---
+
 # Component Communication
 
 ## Overview
@@ -585,7 +600,7 @@ export class UserComponent {
 
 - Learn about [State Management Patterns](state-management-patterns)
 - Explore [Advanced RxJS Patterns](../advanced/advanced-rxjs-patterns)
-- Discover [Change Detection Strategies](../advanced/change-detection-strategies)
+- Discover [Change Detection Strategies](../advanced/optimizing-change-detection-and-performance)
 
 ---
 

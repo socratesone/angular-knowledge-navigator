@@ -10,6 +10,7 @@ import {
   LearningPath,
   LearningPathData 
 } from '../../shared/models';
+import { AssetPathService } from './asset-path.service';
 
 // Re-export for backward compatibility (need runtime values for enums)
 export { SkillLevel, NodeType } from '../../shared/models';
@@ -40,7 +41,10 @@ export class NavigationService {
   readonly navigationHistory$ = computed(() => this.navigationHistory());
   readonly navigationTree$ = this.navigationTreeSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private assetPathService: AssetPathService
+  ) {
     this.loadLearningPath();
     this.initializeProgressTracking();
   }
@@ -49,16 +53,37 @@ export class NavigationService {
    * Load and build navigation tree from learning path JSON
    */
   private loadLearningPath(): void {
-    this.http.get<LearningPathData[]>('/assets/data/learning-path.json').pipe(
+    const assetPath = this.assetPathService.resolveAssetPath('assets/data/learning-path.json');
+    const deploymentInfo = this.assetPathService.getDeploymentInfo();
+    
+    console.log('Navigation Service - Loading learning path:', {
+      assetPath,
+      deploymentInfo,
+      fullUrl: `${deploymentInfo.origin}${deploymentInfo.baseHref}${assetPath}`
+    });
+
+    this.http.get<LearningPathData[]>(assetPath).pipe(
       map(data => this.buildNavigationTree(data)),
       shareReplay(1)
     ).subscribe({
       next: ({ tree, topicsMap }) => {
+        console.log('Navigation Service - Successfully loaded learning path:', {
+          treeNodes: tree.length,
+          topicsCount: topicsMap.size
+        });
         this.navigationTreeSubject.next(tree);
         this.topicsMapSubject.next(topicsMap);
       },
       error: (error) => {
-        console.error('Failed to load learning path:', error);
+        console.error('Navigation Service - Failed to load learning path:', {
+          error,
+          assetPath,
+          deploymentInfo,
+          httpError: error.error,
+          httpStatus: error.status,
+          httpStatusText: error.statusText,
+          fullUrl: error.url
+        });
         // Fallback to empty tree
         this.navigationTreeSubject.next([]);
       }
@@ -352,14 +377,14 @@ export class NavigationService {
     const prerequisiteMap: { [key: string]: string[] } = {
       // Intermediate topics require fundamentals
       'intermediate/angular-signals': ['fundamentals/components-and-templates', 'fundamentals/data-binding'],
-      'intermediate/component-communication': ['fundamentals/components-and-templates'],
+  'intermediate/component-communication-input-output-viewchild-service-based': ['fundamentals/components-and-templates'],
       
       // Advanced topics require intermediate knowledge
-      'advanced/change-detection-strategies': ['intermediate/angular-signals', 'fundamentals/components-and-templates'],
-      'advanced/lazy-loading': ['fundamentals/introduction-to-angular', 'intermediate/component-communication'],
+  'advanced/optimizing-change-detection-and-performance': ['intermediate/angular-signals', 'fundamentals/components-and-templates'],
+  'advanced/lazy-loading': ['fundamentals/introduction-to-angular', 'intermediate/component-communication-input-output-viewchild-service-based'],
       
       // Expert topics require advanced knowledge
-      'expert/angular-constitution-and-best-practices': ['advanced/change-detection-strategies', 'advanced/lazy-loading']
+  'expert/angular-constitution-and-best-practices': ['advanced/optimizing-change-detection-and-performance', 'advanced/lazy-loading']
     };
 
     return prerequisiteMap[topicId] || [];
@@ -520,5 +545,66 @@ export class NavigationService {
    */
   initializeProgressTracking(): void {
     this.loadProgressFromStorage();
+  }
+
+  /**
+   * Initialize navigation with default content
+   * Loads "Introduction to Angular" by default if no topic is selected
+   */
+  initializeNavigation(): void {
+    // Check if we already have a selected topic
+    if (this.selectedTopicId()) {
+      return;
+    }
+
+    // Default topic: Introduction to Angular
+    const defaultTopicId = 'fundamentals/introduction-to-angular';
+    
+    // Verify the topic exists in our topics map
+    const topicsMap = this.topicsMapSubject.value;
+    if (topicsMap.has(defaultTopicId)) {
+      this.selectTopic(defaultTopicId);
+    } else {
+      // Fallback: select first available fundamentals topic
+      this.selectFirstAvailableTopic();
+    }
+  }
+
+  /**
+   * Select first available topic (fallback for default loading)
+   */
+  private selectFirstAvailableTopic(): void {
+    const topicsMap = this.topicsMapSubject.value;
+    
+    // Try to find first fundamentals topic
+    const fundamentalsTopics = Array.from(topicsMap.values())
+      .filter(topic => topic.level === SkillLevel.Fundamentals)
+      .sort((a, b) => a.title.localeCompare(b.title));
+
+    if (fundamentalsTopics.length > 0) {
+      this.selectTopic(fundamentalsTopics[0].id);
+    } else {
+      // Absolute fallback: select first available topic
+      const firstTopic = Array.from(topicsMap.values())[0];
+      if (firstTopic) {
+        this.selectTopic(firstTopic.id);
+      }
+    }
+  }
+
+  /**
+   * Check if default content should be loaded
+   * @returns True if no topic is currently selected
+   */
+  shouldLoadDefaultContent(): boolean {
+    return !this.selectedTopicId();
+  }
+
+  /**
+   * Get default topic ID
+   * @returns Default topic identifier
+   */
+  getDefaultTopicId(): string {
+    return 'fundamentals/introduction-to-angular';
   }
 }

@@ -349,8 +349,8 @@ export class UserComponent {
 
 ## Next Steps
 
-- Learn about [Change Detection Strategies](../advanced/change-detection-strategies)
-- Explore [Component Communication](component-communication) with signals
+- Learn about [Change Detection Strategies](../advanced/optimizing-change-detection-and-performance)
+- Explore [Component Communication](component-communication-input-output-viewchild-service-based) with signals
 - Discover [State Management Patterns](state-management-patterns) using signals
 
 ---

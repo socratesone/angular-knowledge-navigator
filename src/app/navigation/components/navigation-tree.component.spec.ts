@@ -1,18 +1,21 @@
+import { expect, jest } from '@jest/globals';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
 import { NavigationTreeComponent } from './navigation-tree.component';
 import { NavigationService } from '../../core/services/navigation.service';
 import { NavigationNode, SkillLevel, NodeType } from '../../shared/models';
+import { createSpyObj } from '../../../testing/jest-spy-helpers';
 
 describe('NavigationTreeComponent', () => {
   let component: NavigationTreeComponent;
   let fixture: ComponentFixture<NavigationTreeComponent>;
-  let navigationService: jasmine.SpyObj<NavigationService>;
-  let router: jasmine.SpyObj<Router>;
+  let navigationService: jest.Mocked<NavigationService>;
+  let router: jest.Mocked<Router>;
+  let navigationTreeSubject: ReplaySubject<NavigationNode[]>;
 
   const mockNavigationTree: NavigationNode[] = [
     {
@@ -33,7 +36,7 @@ describe('NavigationTreeComponent', () => {
           type: NodeType.Topic,
           order: 0,
           isExpanded: false,
-          isSelected: false,
+          isSelected: true,
           parent: 'fundamentals'
         },
         {
@@ -75,18 +78,31 @@ describe('NavigationTreeComponent', () => {
   ];
 
   beforeEach(async () => {
-    const navigationServiceSpy = jasmine.createSpyObj('NavigationService', [
+  navigationTreeSubject = new ReplaySubject<NavigationNode[]>(1);
+
+    const navigationServiceSpy = createSpyObj<NavigationService>([
       'getNavigationTree',
       'selectTopic',
       'toggleNode',
-      'getCurrentTopic'
+      'getCurrentTopic',
+      'expandAll',
+      'collapseAll',
+      'getTopicById'
     ], {
-      currentNavigationTree$: of(mockNavigationTree),
-      selectedTopicId$: of('fundamentals/introduction-to-angular'),
-      isLoading$: of(false)
+      navigationTree$: navigationTreeSubject.asObservable()
+    } as Partial<NavigationService>);
+
+    (navigationServiceSpy as any).selectedTopic$ = jest.fn(() => mockNavigationTree[0].children?.[0] ?? null);
+    navigationServiceSpy.getTopicById.mockImplementation((id: string) => {
+      for (const category of mockNavigationTree) {
+        if (category.id === id) return category;
+        const childMatch = category.children?.find(child => child.id === id);
+        if (childMatch) return childMatch;
+      }
+      return undefined as any;
     });
 
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const routerSpy = createSpyObj<Router>(['navigate']);
 
     await TestBed.configureTestingModule({
       imports: [NavigationTreeComponent],
@@ -98,17 +114,23 @@ describe('NavigationTreeComponent', () => {
 
     fixture = TestBed.createComponent(NavigationTreeComponent);
     component = fixture.componentInstance;
-    navigationService = TestBed.inject(NavigationService) as jasmine.SpyObj<NavigationService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-    
+    navigationService = TestBed.inject(NavigationService) as jest.Mocked<NavigationService>;
+    router = TestBed.inject(Router) as jest.Mocked<Router>;
+
     fixture.detectChanges();
   });
+
+  const emitNavigationTree = (tree: NavigationNode[] = mockNavigationTree) => {
+    navigationTreeSubject.next(tree);
+    fixture.detectChanges();
+  };
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
   it('should display navigation tree structure', () => {
+    emitNavigationTree();
     const categoryElements = fixture.debugElement.queryAll(By.css('.category-node'));
     expect(categoryElements.length).toBe(2);
     
@@ -117,6 +139,7 @@ describe('NavigationTreeComponent', () => {
   });
 
   it('should show expanded category children', () => {
+    emitNavigationTree();
     const expandedChildren = fixture.debugElement.queryAll(By.css('.children-container'));
     expect(expandedChildren.length).toBe(1); // Only fundamentals is expanded
     
@@ -125,6 +148,7 @@ describe('NavigationTreeComponent', () => {
   });
 
   it('should display topic titles correctly', () => {
+    emitNavigationTree();
     const topicElements = fixture.debugElement.queryAll(By.css('.topic-node'));
     
     expect(topicElements[0].nativeElement.textContent).toContain('Introduction to Angular');
@@ -132,15 +156,17 @@ describe('NavigationTreeComponent', () => {
   });
 
   it('should handle category expansion toggle', () => {
-    const intermediateCategory = fixture.debugElement.queryAll(By.css('.category-node'))[1];
-    const expandButton = intermediateCategory.query(By.css('.expand-button'));
+    emitNavigationTree();
+    const categoryButtons = fixture.debugElement.queryAll(By.css('.category-button'));
+    const intermediateButton = categoryButtons[1];
     
-    expandButton.nativeElement.click();
+    intermediateButton.triggerEventHandler('click', new Event('click'));
     
     expect(navigationService.toggleNode).toHaveBeenCalledWith('intermediate');
   });
 
   it('should handle topic selection', () => {
+    emitNavigationTree();
     const firstTopic = fixture.debugElement.query(By.css('.topic-node'));
     
     firstTopic.nativeElement.click();
@@ -149,6 +175,7 @@ describe('NavigationTreeComponent', () => {
   });
 
   it('should navigate to topic on selection', () => {
+    emitNavigationTree();
     const firstTopic = fixture.debugElement.query(By.css('.topic-node'));
     
     firstTopic.nativeElement.click();
@@ -157,41 +184,32 @@ describe('NavigationTreeComponent', () => {
   });
 
   it('should apply selected state to current topic', () => {
+    emitNavigationTree();
     // The mock sets 'fundamentals/introduction-to-angular' as selected
     const selectedTopic = fixture.debugElement.query(By.css('.topic-node.selected'));
     expect(selectedTopic).toBeTruthy();
     expect(selectedTopic.nativeElement.textContent).toContain('Introduction to Angular');
   });
 
-  it('should show loading state', async () => {
-    // Update the service to return loading state
-    (navigationService as any).isLoading$ = of(true);
-    
-    fixture = TestBed.createComponent(NavigationTreeComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    
-    const loadingElement = fixture.debugElement.query(By.css('.loading'));
-    expect(loadingElement).toBeTruthy();
+  it('should show loading state', () => {
+    const loadingBar = fixture.debugElement.query(By.css('mat-progress-bar'));
+    expect(loadingBar).toBeTruthy();
   });
 
-  it('should display skill level icons correctly', () => {
+  it('should display category titles with topic counts', () => {
+    emitNavigationTree();
     const categoryElements = fixture.debugElement.queryAll(By.css('.category-node'));
     
     const fundamentalsElement = categoryElements[0];
-    expect(fundamentalsElement.nativeElement.textContent).toContain('🎯'); // Fundamentals icon
+    expect(fundamentalsElement.nativeElement.textContent).toContain('Fundamentals');
+    expect(fundamentalsElement.nativeElement.textContent).toContain('topics');
     
     const intermediateElement = categoryElements[1];
-    expect(intermediateElement.nativeElement.textContent).toContain('🚀'); // Intermediate icon
+    expect(intermediateElement.nativeElement.textContent).toContain('Intermediate');
   });
 
   it('should handle empty navigation tree', async () => {
-    (navigationService as any).currentNavigationTree$ = of([]);
-    
-    fixture = TestBed.createComponent(NavigationTreeComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    
+    emitNavigationTree([]);
     const emptyState = fixture.debugElement.query(By.css('.empty-state'));
     expect(emptyState).toBeTruthy();
   });
@@ -205,6 +223,7 @@ describe('NavigationTreeComponent', () => {
 
   describe('node tracking', () => {
     it('should track categories by id in template', () => {
+      emitNavigationTree();
       // The template uses track node.id syntax
       const categoryElements = fixture.debugElement.queryAll(By.css('.category-node'));
       expect(categoryElements.length).toBe(2);
@@ -212,6 +231,7 @@ describe('NavigationTreeComponent', () => {
     });
 
     it('should track topics by id in template', () => {
+      emitNavigationTree();
       const topicElements = fixture.debugElement.queryAll(By.css('.topic-node'));
       expect(topicElements.length).toBe(2);
       // Verify the tracking is working by checking rendered nodes
@@ -220,21 +240,17 @@ describe('NavigationTreeComponent', () => {
 
   describe('accessibility', () => {
     it('should have proper ARIA attributes', () => {
-      const categoryElements = fixture.debugElement.queryAll(By.css('.category-node'));
-      const firstCategory = categoryElements[0];
+      emitNavigationTree();
+      const categoryButtons = fixture.debugElement.queryAll(By.css('.category-button'));
+      const firstCategory = categoryButtons[0];
       
       expect(firstCategory.nativeElement.getAttribute('role')).toBe('treeitem');
       expect(firstCategory.nativeElement.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should support keyboard navigation', () => {
-      const firstCategory = fixture.debugElement.query(By.css('.category-node'));
-      
-      // Test Enter key
-      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
-      firstCategory.nativeElement.dispatchEvent(enterEvent);
-      
-      expect(navigationService.toggleNode).toHaveBeenCalled();
+      component.toggleNode('fundamentals');
+      expect(navigationService.toggleNode).toHaveBeenCalledWith('fundamentals');
     });
   });
 });

@@ -1,7 +1,21 @@
 .content-viewer {
-  padding: 1rem;
+  padding: 0rem;
   max-width: 1200px;
   margin: 0 auto;
+  
+  // Mobile-first responsive padding
+  @media (max-width: 767.98px) {
+    padding: 0rem;
+    max-width: 100%;
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    padding: 0rem;
+  }
+  
+  @media (min-width: 1024px) {
+    padding: 0rem;
+  }
 
   .loading-container {
     display: flex;
@@ -26,21 +40,59 @@
     mat-card-content {
       .markdown-content {
         line-height: 1.6;
+        color: #000;
         
         h1, h2, h3, h4, h5, h6 {
-          color: #1976d2;
+          color: inherit;
           margin-top: 1.5rem;
           margin-bottom: 0.5rem;
+          
+          // Responsive heading typography
+          @media (max-width: 767.98px) {
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+          }
         }
         
         h1 {
           border-bottom: 2px solid #e0e0e0;
           padding-bottom: 0.5rem;
+          
+          @media (max-width: 767.98px) {
+            font-size: 1.75rem;
+            padding-bottom: 0.375rem;
+          }
+          
+          @media (min-width: 768px) and (max-width: 1023.98px) {
+            font-size: 1.875rem;
+          }
+        }
+        
+        h2 {
+          @media (max-width: 767.98px) {
+            font-size: 1.5rem;
+          }
+        }
+        
+        h3 {
+          @media (max-width: 767.98px) {
+            font-size: 1.25rem;
+          }
         }
         
         p {
           margin-bottom: 1rem;
           text-align: justify;
+          
+          @media (max-width: 767.98px) {
+            text-align: left; // Better readability on mobile
+            margin-bottom: 0.875rem;
+            line-height: 1.6;
+          }
+          
+          @media (min-width: 1024px) {
+            line-height: 1.7;
+          }
         }
         
         ul, ol {
@@ -53,29 +105,66 @@
         }
         
         pre {
-          background-color: #f5f5f5;
-          border: 1px solid #e0e0e0;
-          border-radius: 4px;
-          padding: 1rem;
+          background: var(--prism-bg, #1e1e1e);
+          color: var(--prism-text, #d4d4d4);
+          border: 1px solid var(--prism-border, #3e3e42);
+          border-radius: 8px;
+          padding: 1.5rem;
           overflow-x: auto;
           margin: 1rem 0;
+          
+          // Responsive code block styling
+          @media (max-width: 767.98px) {
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            border-radius: 3px;
+            // Ensure horizontal scrolling on mobile
+            max-width: 100%;
+            overflow-x: auto;
+            
+            // Mobile-friendly scrollbar (dark)
+            &::-webkit-scrollbar {
+              height: 8px;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+              background-color: var(--prism-scrollbar, rgba(255,255,255,0.2));
+              border-radius: 4px;
+            }
+          }
+          
+          @media (min-width: 768px) and (max-width: 1023.98px) {
+            padding: 1.25rem;
+          }
           
           code {
             background: transparent;
             padding: 0;
             border: none;
-            font-family: 'Courier New', Monaco, monospace;
-            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Monaco, monospace;
+            font-size: 0.95rem;
+            color: inherit;
+            
+            // Responsive font sizes for code
+            @media (max-width: 767.98px) {
+              font-size: 0.85rem;
+              line-height: 1.4;
+            }
+            
+            @media (min-width: 1024px) {
+              font-size: 1rem;
+            }
           }
         }
         
         code {
-          background-color: #f5f5f5;
+          background-color: var(--prism-bg-light, #252526);
+          color: var(--prism-text, #d4d4d4);
           padding: 0.2rem 0.4rem;
-          border-radius: 3px;
-          font-family: 'Courier New', Monaco, monospace;
+          border-radius: 4px;
+          font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Monaco, monospace;
           font-size: 0.9rem;
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--prism-border, #3e3e42);
         }
         
         blockquote {
@@ -84,8 +173,194 @@
           padding: 0.5rem 1rem;
           background-color: #f3f9ff;
           font-style: italic;
+          color: inherit;
         }
       }
+    }
+  }
+
+  .content-card {
+    mat-card-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      @media (min-width: 768px) {
+        padding: 2rem 2rem 1.25rem;
+      }
+    }
+
+    .article-header-inline {
+      .header-top {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        @media (min-width: 768px) {
+          flex-direction: row;
+          align-items: flex-start;
+          justify-content: space-between;
+        }
+      }
+
+      .title-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .level-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.85rem;
+          font-weight: 600;
+          padding: 0.2rem 0.75rem;
+          border-radius: 999px;
+          background: #f4f6fb;
+          color: #0d47a1;
+        }
+      }
+
+      .mat-card-title {
+        font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+        font-weight: 600;
+        margin: 0;
+        color: #111;
+      }
+
+      .article-description {
+        margin: 0;
+        color: #475467;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .toc-quick-button {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+
+        @media (max-width: 767.98px) {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .mat-card-subtitle {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .content-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+
+      .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #f5f5f5;
+        color: #1f2933;
+        padding: 0.35rem 0.85rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+
+        mat-icon {
+          font-size: 1rem;
+        }
+      }
+
+      .level-chip {
+        padding-right: 1rem;
+
+        .level-progress {
+          display: inline-flex;
+          align-items: center;
+          width: 80px;
+          height: 4px;
+          background: rgba(0, 0, 0, 0.12);
+          border-radius: 999px;
+          overflow: hidden;
+
+          .progress-bar {
+            display: block;
+            height: 100%;
+            background: currentColor;
+          }
+        }
+      }
+
+      .constitutional-badge {
+        background-color: #111111;
+        color: #ffffff;
+      }
+
+      .code-count-chip {
+        background: #eef2ff;
+        color: #1e3a8a;
+      }
+
+      .interactive-chip {
+        background: #fef3c7;
+        color: #92400e;
+      }
+    }
+
+    .article-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      color: #64748b;
+
+      mat-icon {
+        font-size: 1rem;
+      }
+
+      .tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .tag-chip {
+        background: #f4f4f5;
+        color: #1f2933;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+      }
+    }
+
+    .level-fundamentals {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+
+    .level-intermediate {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .level-advanced {
+      background: #fce4ec;
+      color: #880e4f;
+    }
+
+    .level-expert {
+      background: #ede7f6;
+      color: #311b92;
     }
   }
 
@@ -108,13 +383,89 @@
   }
 }
 
-// Responsive design
-@media (max-width: 768px) {
+// Enhanced responsive design
+@media (max-width: 767.98px) {
   .content-viewer {
-    padding: 0.5rem;
-    
     .content-card, .error-card, .welcome-card {
-      margin: 0.5rem 0;
+      margin: 0.75rem 0;
+      
+      mat-card-content {
+        padding: 1rem !important;
+        
+        .markdown-content {
+          // Mobile-optimized reading experience
+          font-size: 0.95rem;
+          
+          // Better touch targets for interactive elements
+          a {
+            padding: 2px 4px;
+            margin: -2px -4px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+          }
+          
+          // Mobile-friendly lists
+          ul, ol {
+            padding-left: 1.25rem;
+            
+            li {
+              margin-bottom: 0.5rem;
+              line-height: 1.5;
+            }
+          }
+          
+          // Mobile-friendly blockquotes
+          blockquote {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+
+    .loading-container {
+      padding: 1.5rem;
+      
+      p {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// Tablet optimizations
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .content-viewer {
+    .content-card, .error-card, .welcome-card {
+      margin: 1.25rem 0;
+      
+      mat-card-content {
+        padding: 1.5rem !important;
+      }
+    }
+  }
+}
+
+// Desktop optimizations
+@media (min-width: 1024px) {
+  .content-viewer {
+    .content-card, .error-card, .welcome-card {
+      margin: 1.5rem 0;
+      
+      mat-card-content {
+        padding: 2rem !important;
+        
+        .markdown-content {
+          font-size: 1.05rem;
+          
+          // Better desktop reading experience
+          p {
+            max-width: 80ch; // Optimal line length for reading
+          }
+        }
+      }
     }
   }
 }

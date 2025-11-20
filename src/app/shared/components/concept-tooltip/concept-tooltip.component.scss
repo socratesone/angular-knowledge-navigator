@@ -1,0 +1,294 @@
+.concept-tooltip {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #444;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 1000;
+  position: relative;
+  max-width: 300px;
+  
+  &.interactive {
+    max-width: 400px;
+  }
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  
+  &.arrow-top {
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: #444;
+    border-bottom: none;
+  }
+  
+  &.arrow-bottom {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: #444;
+    border-top: none;
+  }
+  
+  &.arrow-left {
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: #444;
+    border-right: none;
+  }
+  
+  &.arrow-right {
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: #444;
+    border-left: none;
+  }
+}
+
+.tooltip-content {
+  padding: 12px;
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  
+  .concept-term {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.3;
+  }
+  
+  .concept-category {
+    font-size: 11px;
+    background: #4a4a4a;
+    color: #b0b0b0;
+    padding: 2px 6px;
+    border-radius: 12px;
+    white-space: nowrap;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.tooltip-body {
+  .concept-definition {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #e0e0e0;
+  }
+  
+  .detailed-explanation {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #383838;
+    border-radius: 4px;
+    border-left: 3px solid #007acc;
+    
+    p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #d0d0d0;
+    }
+  }
+  
+  .concept-examples {
+    margin-bottom: 12px;
+    
+    .examples-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #b0b0b0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    ul {
+      margin: 0;
+      padding-left: 16px;
+      list-style: none;
+      
+      li {
+        font-size: 12px;
+        line-height: 1.3;
+        margin-bottom: 2px;
+        position: relative;
+        
+        &::before {
+          content: '•';
+          color: #007acc;
+          position: absolute;
+          left: -12px;
+        }
+        
+        code {
+          background: #1a1a1a;
+          color: #f8f8f2;
+          padding: 1px 4px;
+          border-radius: 3px;
+          font-family: 'Fira Code', 'Consolas', monospace;
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
+
+.tooltip-footer {
+  border-top: 1px solid #444;
+  padding-top: 8px;
+  margin-top: 8px;
+  
+  .related-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    
+    .learn-more-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #b0b0b0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+    
+    .article-link {
+      font-size: 11px;
+      color: #007acc;
+      text-decoration: none;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+      min-height: unset;
+      line-height: 1.2;
+      
+      &:hover {
+        background: #007acc20;
+        color: #40a6ff;
+      }
+      
+      &:focus {
+        outline: 2px solid #007acc;
+        outline-offset: 1px;
+      }
+    }
+    
+    .separator {
+      color: #666;
+      margin: 0 2px;
+      font-size: 10px;
+    }
+  }
+}
+
+.tooltip-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #444;
+  
+  .details-toggle,
+  .close-button {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    color: #b0b0b0;
+    
+    .mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    
+    &:hover {
+      background: #444;
+      color: #ffffff;
+    }
+    
+    &:focus {
+      outline: 2px solid #007acc;
+      outline-offset: 1px;
+    }
+  }
+}
+
+// Responsive behavior
+@media (max-width: 768px) {
+  .concept-tooltip {
+    max-width: calc(100vw - 32px);
+    
+    &.interactive {
+      max-width: calc(100vw - 24px);
+    }
+  }
+  
+  .tooltip-content {
+    padding: 10px;
+  }
+  
+  .tooltip-header .concept-term {
+    font-size: 13px;
+  }
+  
+  .tooltip-body .concept-definition {
+    font-size: 12px;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .concept-tooltip {
+    border-width: 2px;
+    border-color: #fff;
+  }
+  
+  .tooltip-arrow {
+    &.arrow-top {
+      border-top-color: #fff;
+    }
+    
+    &.arrow-bottom {
+      border-bottom-color: #fff;
+    }
+    
+    &.arrow-left {
+      border-left-color: #fff;
+    }
+    
+    &.arrow-right {
+      border-right-color: #fff;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .concept-tooltip,
+  .article-link,
+  .details-toggle,
+  .close-button {
+    transition: none;
+  }
+}

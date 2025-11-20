@@ -10,12 +10,49 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { ContentService } from '../../core/services/content.service';
 import { NavigationService } from '../../core/services/navigation.service';
+import { MarkdownProcessorService } from '../../core/services/markdown-processor.service';
 import { SearchService } from '../../core/services/search.service';
 import { ContentState, LoadingStatus, BestPractice, Caveat, CodeExample } from '../../shared/models';
+import { ArticleMetadata, SkillLevel } from '../../shared/models/vocabulary.model';
 import { HighlightDirective, AdvancedHighlightDirective } from '../../shared/directives';
 import { CodeHighlighterComponent } from '../../shared/components/code-highlighter.component';
+import { ContentCleanupPipe } from '../../shared/pipes/content-cleanup.pipe';
 import { BestPracticesComponent } from './best-practices.component';
 import { CaveatsComponent } from './caveats.component';
+
+interface ArticleLevelBadgeView {
+  label: string;
+  icon: string;
+  cssClass: string;
+  progress: number;
+}
+
+const LEVEL_BADGE_CONFIG: Record<SkillLevel, { label: string; icon: string; cssClass: string; order: number }> = {
+  [SkillLevel.FUNDAMENTALS]: {
+    label: 'Fundamentals',
+    icon: 'school',
+    cssClass: 'level-fundamentals',
+    order: 1
+  },
+  [SkillLevel.INTERMEDIATE]: {
+    label: 'Intermediate',
+    icon: 'trending_up',
+    cssClass: 'level-intermediate',
+    order: 2
+  },
+  [SkillLevel.ADVANCED]: {
+    label: 'Advanced',
+    icon: 'psychology',
+    cssClass: 'level-advanced',
+    order: 3
+  },
+  [SkillLevel.EXPERT]: {
+    label: 'Expert',
+    icon: 'star',
+    cssClass: 'level-expert',
+    order: 4
+  }
+};
 
 @Component({
   selector: 'app-content-viewer',
@@ -33,6 +70,7 @@ import { CaveatsComponent } from './caveats.component';
     HighlightDirective,
     AdvancedHighlightDirective,
     CodeHighlighterComponent,
+    ContentCleanupPipe,
     BestPracticesComponent,
     CaveatsComponent
   ],
@@ -46,7 +84,6 @@ import { CaveatsComponent } from './caveats.component';
       }
       
       @if (contentState().loadingStatus === LoadingStatus.Loaded) {
-        
         <!-- Prerequisites Warning -->
         @if (hasUnmetPrerequisites()) {
           <mat-card class="prerequisites-warning">
@@ -72,57 +109,88 @@ import { CaveatsComponent } from './caveats.component';
 
         <!-- Main Content Card -->
         <mat-card class="content-card">
-          <mat-card-header>
-            <mat-card-title>{{ getTopicTitle() }}</mat-card-title>
+          <mat-card-header class="article-header-inline" data-testid="article-header">
             <mat-card-subtitle>
-              <div class="content-meta">
-                <div data-testid="reading-time" class="reading-time">
-                  <mat-icon>schedule</mat-icon>
-                  {{ getEstimatedReadingTime() }} min read
+              @if (hasHeaderMetadataBadges()) {
+                <div class="content-meta">
+                  <div class="meta-chip reading-time" *ngIf="getArticleReadingTimeLabel() as readingTime" data-testid="reading-time">
+                    <mat-icon>schedule</mat-icon>
+                    {{ readingTime }}
+                  </div>
+                  <div class="meta-chip level-chip" *ngIf="getArticleLevelBadge() as levelBadge" [ngClass]="levelBadge.cssClass">
+                    <mat-icon>{{ levelBadge.icon }}</mat-icon>
+                    {{ levelBadge.label }}
+                    <span class="level-progress" aria-hidden="true">
+                      <span class="progress-bar" [style.width.%]="levelBadge.progress"></span>
+                    </span>
+                  </div>
+                  @if (isConstitutionalTopic()) {
+                    <div class="meta-chip constitutional-badge">
+                      <mat-icon>verified</mat-icon>
+                      Constitutional
+                    </div>
+                  }
+                  @if (getCodeExampleCount() > 0) {
+                    <div class="meta-chip code-count-chip">
+                      <mat-icon>code</mat-icon>
+                      {{ getCodeExampleCount() }} {{ getCodeExampleCount() === 1 ? 'example' : 'examples' }}
+                    </div>
+                  }
+                  @if (hasInteractiveExamples()) {
+                    <div class="meta-chip interactive-chip">
+                      <mat-icon>play_circle</mat-icon>
+                      Interactive
+                    </div>
+                  }
+                  
+                  <!-- Table of Contents -->
+                  @if (false && hasTableOfContents()) {
+                    <div class="table-of-contents" data-testid="table-of-contents">
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon>list</mat-icon>
+                            Table of Contents
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <nav>
+                          <ul>
+                            @for (heading of getTableOfContents(); track heading.id) {
+                              <li [class]="'toc-level-' + heading.level">
+                                <a [href]="'#' + heading.id">{{ heading.text }}</a>
+                              </li>
+                            }
+                          </ul>
+                        </nav>
+                      </mat-expansion-panel>
+                    </div>
+                  }
+                  
                 </div>
-                @if (isConstitutionalTopic()) {
-                  <mat-chip class="constitutional-badge">
-                    <mat-icon>verified</mat-icon>
-                    Constitutional
-                  </mat-chip>
-                }
-                <mat-chip class="difficulty-chip">
-                  Level {{ getCurrentTopicDifficulty() }}
-                </mat-chip>
-              </div>
+              }
+
+              @if (false && getArticleTags().length > 0) {
+                <div class="article-tags">
+                  <mat-icon>sell</mat-icon>
+                  <div class="tags-list">
+                    @for (tag of getArticleTags(); track tag) {
+                      <span class="tag-chip">#{{ tag }}</span>
+                    }
+                  </div>
+                  
+                </div>
+              }
+              
             </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            
-            <!-- Table of Contents -->
-            @if (hasTableOfContents()) {
-              <div class="table-of-contents" data-testid="table-of-contents">
-                <mat-expansion-panel>
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
-                      <mat-icon>list</mat-icon>
-                      Table of Contents
-                    </mat-panel-title>
-                  </mat-expansion-panel-header>
-                  <nav>
-                    <ul>
-                      @for (heading of getTableOfContents(); track heading.id) {
-                        <li [class]="'toc-level-' + heading.level">
-                          <a [href]="'#' + heading.id">{{ heading.text }}</a>
-                        </li>
-                      }
-                    </ul>
-                  </nav>
-                </mat-expansion-panel>
-              </div>
-            }
-
+           
             <!-- Main Content -->
             <div 
               class="markdown-content" 
               data-testid="content-body"
               aria-live="polite"
-              [innerHTML]="contentState().renderedHtml"
+              [innerHTML]="contentState().renderedHtml | contentCleanup"
             ></div>
             
             <!-- Code Examples -->
@@ -219,25 +287,22 @@ import { CaveatsComponent } from './caveats.component';
             <mat-card-title>Content Error</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <div [innerHTML]="contentState().renderedHtml"></div>
+            <div [innerHTML]="contentState().renderedHtml | contentCleanup"></div>
           </mat-card-content>
         </mat-card>
       }
       
       @if (contentState().loadingStatus === LoadingStatus.Idle) {
-        <mat-card class="welcome-card">
+        <mat-card class="default-loading-card">
           <mat-card-header>
-            <mat-card-title>Welcome to Angular Knowledge Navigator</mat-card-title>
+            <mat-card-title>Loading Angular Knowledge Navigator</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <p>Select a topic from the navigation to begin your Angular learning journey.</p>
-            <p>This application demonstrates Angular best practices including:</p>
-            <ul>
-              <li>Standalone components with explicit imports</li>
-              <li>OnPush change detection strategy</li>
-              <li>Angular Signals for reactive state management</li>
-              <li>Constitutional compliance with Angular best practices</li>
-            </ul>
+            <div class="loading-container">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Preparing your Angular learning experience...</p>
+            </div>
+            <p class="loading-hint">Loading "Introduction to Angular" to get you started!</p>
           </mat-card-content>
         </mat-card>
       }
@@ -263,6 +328,7 @@ export class ContentViewerComponent implements OnInit {
 
   // Additional reactive state for enhanced features
   readonly currentTopicId = signal<string>('');
+  readonly articleMetadata = signal<ArticleMetadata | null>(null);
   readonly prerequisites = signal<string[]>([]);
   readonly relatedTopics = signal<string[]>([]);
   readonly codeExamples = signal<CodeExample[]>([]);
@@ -272,10 +338,14 @@ export class ContentViewerComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private contentService: ContentService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private markdownProcessor: MarkdownProcessorService
   ) {}
 
   ngOnInit(): void {
+    // Initialize navigation service with default content
+    this.navigationService.initializeNavigation();
+    
     // Subscribe to content changes
     this.contentService.currentContent$.subscribe(state => {
       this.contentState.set(state);
@@ -294,6 +364,9 @@ export class ContentViewerComponent implements OnInit {
         this.currentTopicId.set(fullTopicId);
         this.loadContent(fullTopicId);
         this.loadEnhancedData(fullTopicId);
+      } else {
+        // No topic specified - load default content
+        this.loadDefaultContent();
       }
     });
   }
@@ -302,11 +375,63 @@ export class ContentViewerComponent implements OnInit {
     this.contentService.loadContent(topicId).subscribe({
       next: (state) => {
         console.log('Content loaded:', state);
+        // Extract article metadata after content is loaded
+        this.extractArticleMetadata(state);
       },
       error: (error) => {
         console.error('Failed to load content:', error);
       }
     });
+  }
+
+  /**
+   * Extract article metadata from loaded content
+   */
+  private extractArticleMetadata(contentState: ContentState): void {
+    if (contentState.markdown && contentState.topicId) {
+      const metadata = this.markdownProcessor.extractArticleMetadata(
+        contentState.markdown, 
+        contentState.topicId
+      );
+      this.articleMetadata.set(metadata);
+    }
+  }
+
+  /**
+   * Load default content (Introduction to Angular)
+   */
+  private loadDefaultContent(): void {
+    // Set loading state
+    this.contentState.set({
+      ...this.contentState(),
+      loadingStatus: LoadingStatus.Loading
+    });
+
+    // Load default content from ContentService
+    this.contentService.loadDefaultContent().subscribe({
+      next: (state) => {
+        this.currentTopicId.set(state.topicId);
+        this.loadEnhancedData(state.topicId);
+        this.extractArticleMetadata(state);
+        console.log('Default content loaded:', state);
+      },
+      error: (error) => {
+        console.error('Failed to load default content:', error);
+        // Fallback to idle state with welcome message
+        this.contentState.set({
+          ...this.contentState(),
+          loadingStatus: LoadingStatus.Idle
+        });
+      }
+    });
+  }
+
+  /**
+   * Check if default content should be loaded
+   */
+  private shouldLoadDefaultContent(): boolean {
+    const currentState = this.contentState();
+    return currentState.loadingStatus === LoadingStatus.Idle && !currentState.topicId;
   }
 
   getTopicTitle(): string {
@@ -380,6 +505,97 @@ export class ContentViewerComponent implements OnInit {
            title.includes('constitutional');
   }
 
+  getArticleTitle(): string {
+    return this.articleMetadata()?.title || this.getTopicTitle();
+  }
+
+  getArticleDescription(): string | null {
+    return this.articleMetadata()?.description || null;
+  }
+
+  getArticleTags(): string[] {
+    return this.articleMetadata()?.tags || [];
+  }
+
+  getArticleReadingTimeLabel(): string | null {
+    const totalMinutes = this.getNormalizedReadingTime();
+    if (!totalMinutes) {
+      return null;
+    }
+
+    if (totalMinutes === 1) {
+      return '1 min read';
+    }
+
+    if (totalMinutes < 60) {
+      return `${totalMinutes} mins read`;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (minutes === 0) {
+      return `${hours}h read`;
+    }
+
+    return `${hours}h ${minutes}m read`;
+  }
+
+  getArticleLevelBadge(): ArticleLevelBadgeView | null {
+    const level = this.articleMetadata()?.level;
+    if (!level) {
+      return null;
+    }
+
+    const config = LEVEL_BADGE_CONFIG[level];
+    if (!config) {
+      return null;
+    }
+
+    return {
+      label: config.label,
+      icon: config.icon,
+      cssClass: config.cssClass,
+      progress: (config.order / 4) * 100
+    };
+  }
+
+  getCodeExampleCount(): number {
+    return this.articleMetadata()?.codeBlockCount ?? this.getCodeExamples().length;
+  }
+
+  hasInteractiveExamples(): boolean {
+    return this.articleMetadata()?.hasInteractiveExamples ?? false;
+  }
+
+  hasHeaderMetadataBadges(): boolean {
+    return Boolean(
+      this.getArticleReadingTimeLabel() ||
+      this.getArticleLevelBadge() ||
+      this.isConstitutionalTopic() ||
+      this.getCodeExampleCount() > 0 ||
+      this.hasInteractiveExamples()
+    );
+  }
+
+  scrollToTableOfContents(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const tocElement = document.querySelector('[data-testid="table-of-contents"]');
+    if (!tocElement) {
+      return;
+    }
+
+    tocElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  private getNormalizedReadingTime(): number | null {
+    const metadata = this.articleMetadata();
+    const minutes = metadata?.readingTime ?? metadata?.estimatedTime ?? this.getEstimatedReadingTime();
+    return minutes > 0 ? minutes : null;
+  }
+
   getCurrentTopicDifficulty(): number {
     const topicId = this.currentTopicId();
     const level = topicId.split('/')[0];
@@ -437,7 +653,7 @@ export class ContentViewerComponent implements OnInit {
   private getMockCaveats(topicId: string): Caveat[] {
     // Mock caveats for demonstration
     const caveatMap: { [key: string]: Caveat[] } = {
-      'advanced/change-detection-strategies': [
+  'advanced/optimizing-change-detection-and-performance': [
         {
           id: 'onpush-caveat',
           title: 'OnPush with Mutable Objects',

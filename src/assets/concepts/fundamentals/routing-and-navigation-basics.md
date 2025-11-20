@@ -1,37 +1,62 @@
 ---
-title: "TOPIC_TITLE"
-slug: "TOPIC_SLUG"
+title: "Routing and Navigation Basics"
+slug: "routing-and-navigation-basics"
 category: "Fundamentals"
 skillLevel: "fundamentals"
 difficulty: 2
-estimatedReadingTime: 20
+estimatedReadingTime: 16
 constitutional: false
-tags: ["fundamentals", "TOPIC_TAG"]
-prerequisites: []
-relatedTopics: []
-lastUpdated: "2025-11-11"
-contentPath: "/assets/concepts/fundamentals/TOPIC_SLUG.md"
+tags: ["router", "navigation"]
+prerequisites: ["fundamentals/introduction-to-observables-and-rxjs"]
+relatedTopics: ["fundamentals/handling-user-input-and-validation"]
+lastUpdated: "2025-11-17"
+contentPath: "/assets/concepts/fundamentals/routing-and-navigation-basics.md"
 ---
 
-# TOPIC_TITLE
+# Routing and Navigation Basics
+
+The Angular Router keeps your UI in sync with the browser URL, enabling bookmarking, shareable deep links, and guardrails around protected areas of the app. This primer covers route configuration, navigation APIs, and first-level guard strategies.
 
 ## Learning Objectives
-This topic covers essential TOPIC_TITLE concepts for Angular development.
 
-## Overview
-Comprehensive coverage of TOPIC_TITLE with practical examples and best practices.
+- Configure top-level routes using standalone components or lazy-loaded route trees
+- Navigate declaratively with `<a routerLink>` and programmatically with `Router.navigate`
+- Read route parameters, query params, and fragment information reactively
+- Protect routes with `canActivate` and preload critical bundles
 
-## Key Concepts
-- Fundamental concepts and patterns
-- Real-world implementation examples
-- Performance considerations
-- Best practices and common pitfalls
+## Defining Routes
 
-## Constitutional Alignment
-How this topic supports modern Angular constitutional practices.
+```ts
+export const appRoutes: Routes = [
+	{
+		path: 'concepts',
+		loadChildren: () => import('./concepts/routes').then((m) => m.CONCEPT_ROUTES)
+	},
+	{ path: '', pathMatch: 'full', redirectTo: 'concepts/fundamentals' },
+	{ path: '**', loadComponent: () => import('./shared/not-found.component') }
+];
+```
+
+Use `loadChildren` with standalone route files to keep bundles lean. The wildcard route should always be last and render a lightweight “not found” view.
+
+## Navigation Patterns
+
+- **Declarative:** `<a routerLink="['/concepts', topic.slug]"></a>` keeps the link accessible and automatically toggles `aria-current` when the URL matches.
+- **Programmatic:** Inject `Router` and call `navigate` or `navigateByUrl` when navigation depends on imperative logic (e.g., after saving a form).
+- **Stateful Navigation:** pass extras such as `state: { from: 'search' }` to show contextual toasts after redirecting.
+
+## Reading Route Data
+
+- Use `ActivatedRoute.paramMap` and the `async` pipe to project URL parameters.
+- Combine `paramMap`, `queryParamMap`, and custom data via `combineLatest` to build view models without nested subscriptions.
+
+## Guarding Routes
+
+- Implement `CanActivateFn` (Angular 15+) to keep guard logic close to feature modules.
+- Surface redirect reasons in query params so UX can show the appropriate message (“Please sign in to edit drafts”).
+- Pair guards with **resolvers** when you need data loaded before the component initializes.
 
 ## Next Steps
-Related topics to explore after mastering this concept.
 
-## Expansion Guidance for LLMs
-This stub provides the foundation for comprehensive content expansion covering all aspects of TOPIC_TITLE in Angular development.
+- Enable [router tracing](https://angular.io/api/router/Router#enabletracing) in development to understand navigation timing.
+- Explore preloading strategies (e.g., `QuickLinkStrategy`) to optimize route-to-route transitions.

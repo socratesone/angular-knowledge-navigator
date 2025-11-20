@@ -1,3 +1,18 @@
+---
+title: "Optimizing Change Detection and Performance"
+slug: "optimizing-change-detection-and-performance"
+category: "Advanced"
+skillLevel: "advanced"
+difficulty: 4
+estimatedReadingTime: 45
+constitutional: true
+tags: ["change-detection", "performance", "signals", "onpush"]
+prerequisites: ["intermediate/angular-signals", "intermediate/component-communication-input-output-viewchild-service-based"]
+relatedTopics: ["standalone-components-and-feature-modules-integration", "advanced-dependency-injection-scopes", "reactive-state-management-rxjs-componentstore-ngrx-introduction"]
+lastUpdated: "2025-11-18"
+contentPath: "/assets/concepts/advanced/optimizing-change-detection-and-performance.md"
+---
+
 # Change Detection Strategies
 
 ## Overview

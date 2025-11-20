@@ -7,6 +7,7 @@ import { AppLayoutComponent } from './core/layout/app-layout.component';
   standalone: true,
   imports: [CommonModule, AppLayoutComponent],
   template: `<app-layout></app-layout>`,
+  styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {

@@ -1,3 +1,4 @@
+import { expect, jest } from '@jest/globals';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -66,7 +67,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       expect(req.request.method).toBe('GET');
       expect(req.request.responseType).toBe('text');
       req.flush(mockMarkdownContent);
@@ -84,7 +85,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
@@ -101,10 +102,10 @@ export class AppComponent {}
         });
 
         // Should not make another HTTP request
-        httpMock.expectNone(`/assets/concepts/${topicId}.md`);
+        httpMock.expectNone(`assets/concepts/${topicId}.md`);
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(mockMarkdownContent);
     });
   });
@@ -117,7 +118,7 @@ export class AppComponent {}
         expect(contentState.renderedHtml).toBeTruthy();
         
         // Check that HTML contains processed content
-        const htmlString = contentState.renderedHtml.toString();
+  const htmlString = contentState.renderedHtml as string;
         expect(htmlString).toContain('<h1');
         expect(htmlString).toContain('Introduction to Angular');
         expect(htmlString).toContain('<pre');
@@ -126,7 +127,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(mockMarkdownContent);
     });
 
@@ -142,7 +143,7 @@ export class AppComponent {}
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush(invalidMarkdown);
     });
   });
@@ -158,21 +159,21 @@ export class AppComponent {}
         done();
       });
 
-      const expectedPath = `/assets/concepts/${level}/${topic}.md`;
+      const expectedPath = `assets/concepts/${level}/${topic}.md`;
       const req = httpMock.expectOne(expectedPath);
       req.flush('# Angular Signals\n\nModern reactive state management.');
     });
 
     it('should support deep topic paths', (done) => {
-      const complexTopicId = 'advanced/performance/change-detection-strategies';
+  const complexTopicId = 'advanced/performance/optimizing-change-detection-and-performance';
 
       service.loadContent(complexTopicId).subscribe(contentState => {
         expect(contentState.topicId).toBe(complexTopicId);
         done();
       });
 
-      const req = httpMock.expectOne(`/assets/concepts/${complexTopicId}.md`);
-      req.flush('# Change Detection Strategies');
+      const req = httpMock.expectOne(`assets/concepts/${complexTopicId}.md`);
+  req.flush('# Optimizing Change Detection and Performance');
     });
   });
 
@@ -181,42 +182,50 @@ export class AppComponent {}
       const topicId = 'fundamentals/data-binding';
       const states: LoadingStatus[] = [];
 
-      service.currentContent$.subscribe(contentState => {
+      const subscription = service.currentContent$.subscribe(contentState => {
         states.push(contentState.loadingStatus);
         
-        if (states.length === 2) {
-          expect(states[0]).toBe(LoadingStatus.Loading);
-          expect(states[1]).toBe(LoadingStatus.Loaded);
+        if (states.length === 3) {
+          expect(states[0]).toBe(LoadingStatus.Idle);
+          expect(states[1]).toBe(LoadingStatus.Loading);
+          expect(states[2]).toBe(LoadingStatus.Loaded);
+          subscription.unsubscribe();
           done();
         }
       });
 
       service.loadContent(topicId).subscribe();
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('# Data Binding\n\nTwo-way data binding in Angular.');
     });
 
     it('should maintain reactive state across multiple subscriptions', (done) => {
       const topicId = 'fundamentals/directives';
-      let subscriptionCount = 0;
+      const loadedBy = new Set<string>();
 
-      // Multiple subscribers
-      service.currentContent$.subscribe(contentState => {
-        subscriptionCount++;
-        if (subscriptionCount === 2 && contentState.loadingStatus === LoadingStatus.Loaded) {
-          expect(contentState.topicId).toBe(topicId);
-          done();
+      const sub1 = service.currentContent$.subscribe(contentState => {
+        if (contentState.loadingStatus === LoadingStatus.Loaded) {
+          loadedBy.add('first');
         }
       });
 
-      service.currentContent$.subscribe(() => {
-        subscriptionCount++;
+      const sub2 = service.currentContent$.subscribe(contentState => {
+        if (contentState.loadingStatus === LoadingStatus.Loaded) {
+          loadedBy.add('second');
+        }
       });
 
-      service.loadContent(topicId).subscribe();
+      service.loadContent(topicId).subscribe(contentState => {
+        expect(contentState.topicId).toBe(topicId);
+        expect(loadedBy.has('first')).toBe(true);
+        expect(loadedBy.has('second')).toBe(true);
+        sub1.unsubscribe();
+        sub2.unsubscribe();
+        done();
+      });
 
-      const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req.flush('# Directives\n\nCustom directives in Angular.');
     });
   });
@@ -233,13 +242,13 @@ export class AppComponent {}
         // Verify all content is cached
         const cacheInfo = service.getCacheInfo();
         expect(cacheInfo.size).toBe(3);
-        expect(cacheInfo.topics).toEqual(jasmine.arrayContaining(topicIds));
+  expect(cacheInfo.topics).toEqual(expect.arrayContaining(topicIds));
         done();
       });
 
       // Expect HTTP requests for all topics
       topicIds.forEach((topicId, index) => {
-        const req = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+        const req = httpMock.expectOne(`assets/concepts/${topicId}.md`);
         req.flush(`# Topic ${index + 1}\n\nContent for ${topicId}`);
       });
     });
@@ -258,11 +267,11 @@ export class AppComponent {}
       });
 
       // First request succeeds
-      const req1 = httpMock.expectOne('/assets/concepts/fundamentals/existing-topic.md');
+      const req1 = httpMock.expectOne('assets/concepts/fundamentals/existing-topic.md');
       req1.flush('# Existing Topic');
 
       // Second request fails
-      const req2 = httpMock.expectOne('/assets/concepts/fundamentals/missing-topic.md');
+      const req2 = httpMock.expectOne('assets/concepts/fundamentals/missing-topic.md');
       req2.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
   });
@@ -287,12 +296,12 @@ export class AppComponent {}
       });
 
       // First request fails
-      const req1 = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req1 = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req1.error(new ErrorEvent('Network error'));
       attemptCount++;
 
       // Second request succeeds
-      const req2 = httpMock.expectOne(`/assets/concepts/${topicId}.md`);
+      const req2 = httpMock.expectOne(`assets/concepts/${topicId}.md`);
       req2.flush('# Retry Test\n\nContent loaded successfully on retry.');
     });
   });
