@@ -6,9 +6,9 @@ skillLevel: "intermediate"
 difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
-tags: ["intermediate", "using"]
-prerequisites: []
-relatedTopics: []
+tags: ["intermediate", "rxjs"]
+prerequisites: ["introduction-to-observables-and-rxjs"]
+relatedTopics: ["reactive-state-management-rxjs-componentstore-ngrx-introduction", "http-client-and-interceptors"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/using-rxjs-operators-map-filter-switchmap-etc.md"
 ---
@@ -16,35 +16,45 @@ contentPath: "/assets/concepts/intermediate/using-rxjs-operators-map-filter-swit
 # Using RxJS Operators (map, filter, switchMap, etc.)
 
 ## Learning Objectives
-Master Using RxJS Operators (map, filter, switchMap, etc.) concepts for intermediate Angular development with constitutional patterns.
+- Select the right operator for async UI flows.
+- Avoid nested subscriptions with higher-order mapping.
+- Build readable, testable streams for state and side effects.
+- Apply error handling and cleanup in RxJS pipelines.
 
 ## Overview
-Comprehensive coverage of Using RxJS Operators (map, filter, switchMap, etc.) including modern Angular approaches, performance considerations, and real-world applications.
+RxJS operators are the building blocks of Angular’s reactive patterns. Choosing the right operator keeps code concise and prevents memory leaks or race conditions.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## Core Operators
+```typescript
+const searchResults$ = searchTerms$.pipe(
+  debounceTime(300),
+  distinctUntilChanged(),
+  switchMap(term => this.api.search(term)),
+  catchError(() => of([]))
+);
+```
 
-## Constitutional Alignment
-How Using RxJS Operators (map, filter, switchMap, etc.) supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+- **map**: transform values.
+- **filter**: drop unwanted values.
+- **switchMap**: cancel in-flight requests when new input arrives.
+- **mergeMap**: run requests in parallel.
+- **concatMap**: queue requests in order.
 
-## Real-World Applications
-Practical use cases where Using RxJS Operators (map, filter, switchMap, etc.) provides significant value in production applications.
+## Error Handling
+- Use `catchError` to return a fallback value.
+- Use `retry` with backoff for transient failures.
+- Use `finalize` to stop spinners or clean up resources.
+
+## Practice & Apply
+- Refactor a nested subscription into a `switchMap`.
+- Add `takeUntilDestroyed()` to a component stream.
+- Use `shareReplay(1)` to cache a single HTTP call.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. When should you prefer `switchMap` over `mergeMap`?
+2. Why is `shareReplay(1)` helpful for HTTP requests?
+3. How do you avoid memory leaks in component streams?
+4. What does `distinctUntilChanged` protect you from?
 
 ## Next Steps
-Related advanced topics to explore after mastering Using RxJS Operators (map, filter, switchMap, etc.).
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Using RxJS Operators (map, filter, switchMap, etc.) in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[introduction-to-observables-and-rxjs]], [[reactive-state-management-rxjs-componentstore-ngrx-introduction]], [[http-client-and-interceptors]]

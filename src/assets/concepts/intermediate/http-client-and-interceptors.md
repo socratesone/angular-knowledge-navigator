@@ -7,8 +7,8 @@ difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
 tags: ["intermediate", "http"]
-prerequisites: []
-relatedTopics: []
+prerequisites: ["dependency-injection-basics", "services-and-providers", "introduction-to-observables-and-rxjs"]
+relatedTopics: ["error-handling-and-globalerrorhandler", "using-rxjs-operators-map-filter-switchmap-etc"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/http-client-and-interceptors.md"
 ---
@@ -16,35 +16,86 @@ contentPath: "/assets/concepts/intermediate/http-client-and-interceptors.md"
 # HTTP Client and Interceptors
 
 ## Learning Objectives
-Master HTTP Client and Interceptors concepts for intermediate Angular development with constitutional patterns.
+- Use `HttpClient` with strong typing and shared response models.
+- Configure `provideHttpClient` and add interceptors for auth, logging, and retries.
+- Apply RxJS operators for error handling and response shaping.
+- Avoid common HTTP anti-patterns like nested subscriptions and eager polling.
 
 ## Overview
-Comprehensive coverage of HTTP Client and Interceptors including modern Angular approaches, performance considerations, and real-world applications.
+Angular's `HttpClient` is the primary API for REST and JSON HTTP calls. Interceptors let you enforce cross-cutting concerns—headers, auth, caching, logging—without duplicating logic in every service.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## HTTP Client Essentials
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ArticlesApi {
+  private http = inject(HttpClient);
 
-## Constitutional Alignment
-How HTTP Client and Interceptors supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+  getArticles(): Observable<Article[]> {
+    return this.http.get<Article[]>('/api/articles');
+  }
 
-## Real-World Applications
-Practical use cases where HTTP Client and Interceptors provides significant value in production applications.
+  createArticle(payload: NewArticle): Observable<Article> {
+    return this.http.post<Article>('/api/articles', payload);
+  }
+}
+```
+
+Provide the client in your app config:
+```typescript
+export const appConfig: ApplicationConfig = {
+  providers: [provideHttpClient()]
+};
+```
+
+## Interceptors
+Interceptors can add headers, centralize error handling, and normalize responses.
+
+```typescript
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authToken = inject(AuthTokenStore).token();
+  const authReq = authToken
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${authToken}` } })
+    : req;
+
+  return next(authReq);
+};
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withInterceptors([authInterceptor]))
+  ]
+};
+```
+
+## Error Handling and Retries
+```typescript
+getArticles(): Observable<Article[]> {
+  return this.http.get<Article[]>('/api/articles').pipe(
+    retry({ count: 2, delay: 300 }),
+    catchError((error: HttpErrorResponse) => {
+      this.logger.error('Articles fetch failed', error);
+      return throwError(() => new Error('Unable to load articles.'));
+    })
+  );
+}
+```
+
+## Best Practices
+- **Type everything**: use interfaces for request/response payloads.
+- **Keep services thin**: move formatting or mapping to dedicated helpers.
+- **Prefer `async` pipe**: avoid manual subscription cleanup in components.
+- **Avoid secrets**: never ship secrets in the client or interceptors.
+
+## Practice & Apply
+- Build an interceptor that adds a correlation ID header.
+- Add an error banner component that listens for global HTTP failures.
+- Simulate a 401 response and redirect to a login route.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. Why is `HttpClient` strongly typed and how does it improve reliability?
+2. When should you use an interceptor vs logic in a service method?
+3. How do you prevent memory leaks with HTTP subscriptions?
+4. What is the difference between retrying a request and caching a response?
 
 ## Next Steps
-Related advanced topics to explore after mastering HTTP Client and Interceptors.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of HTTP Client and Interceptors in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[using-rxjs-operators-map-filter-switchmap-etc]], [[error-handling-and-globalerrorhandler]], [[advanced-dependency-injection-scopes]]

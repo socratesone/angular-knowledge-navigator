@@ -199,5 +199,8 @@ export class ListComponent {
 ## Next Steps
 [[optimizing-change-detection-and-performance]], [[angular-signals]], [[smart-vs-presentational-components-pattern]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include detailed performance benchmarks, comprehensive debugging techniques, advanced OnPush patterns, integration with state management libraries, mobile performance considerations, and migration strategies from Default to OnPush. Cover Zone.js alternatives and the future of change detection in Angular.
+## Practice & Apply
+- **Component Audit**: Identify three components that are safe to switch to `OnPush` and list why.
+- **Trigger Map**: Record which actions still update the view after switching and which require manual `markForCheck`.
+- **Signals Exercise**: Replace one observable stream with a signal and observe how change detection behaves.
+- **Profiler Run**: Use Angular DevTools to compare change detection cycles before and after the switch.

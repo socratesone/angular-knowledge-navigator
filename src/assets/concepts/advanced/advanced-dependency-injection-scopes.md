@@ -281,5 +281,8 @@ describe('Advanced DI Component', () => {
 ## Next Steps
 [[custom-decorators-and-dynamic-components]], [[reactive-state-management-rxjs-componentstore-ngrx-introduction]], [[application-architecture-and-module-boundaries]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive examples of hierarchical injection, advanced provider patterns, custom token creation, multi-provider systems, performance benchmarks, testing strategies, troubleshooting guides, and integration with modern Angular features like signals and standalone components.
+## Practice & Apply
+- **Scope Mapping**: Diagram which providers are created at root, feature, and component levels.
+- **Token Drill**: Create an `InjectionToken` for a config object and swap values per environment.
+- **Multi-Provider Lab**: Add multiple implementations for a logger token and choose one at runtime.
+- **Testing Setup**: Use TestBed to override a provider and assert the component behavior.

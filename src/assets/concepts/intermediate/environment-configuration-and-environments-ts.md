@@ -7,8 +7,8 @@ difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
 tags: ["intermediate", "environment"]
-prerequisites: []
-relatedTopics: []
+prerequisites: ["angular-cli-and-project-setup"]
+relatedTopics: ["security-best-practices-xss-sanitization-csp", "integration-testing-and-continuous-integration-pipelines"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/environment-configuration-and-environments-ts.md"
 ---
@@ -117,17 +117,18 @@ Avoid accessing environment values directly inside templates; inject services or
 - [ ] Fallback gracefully when critical values missing (throw descriptive error in development).
 - [ ] Validate environment names with type-safe union (e.g., `type EnvironmentName = 'development' | 'production' | 'staging';`).
 
+## Practice & Apply
+- Add a `staging` environment file and verify `ng build --configuration=staging`.
+- Add a feature flag and use it to toggle a UI section.
+- Write a test that asserts the API base URL is coming from the environment file.
+
+## Assessment Questions
+1. Why should secrets never live in `environment.ts`?
+2. How does `fileReplacements` work during builds?
+3. What is the benefit of a `baseEnvironment` file?
+4. When should you move from static flags to a remote config system?
+
 ## Next Steps
 - Use [[security-best-practices-xss-sanitization-csp]] to secure downstream services referenced by environments.
 - Feed configuration metadata into [[integration-testing-and-continuous-integration-pipelines]] for targeted test matrices.
 - Pair with [[monorepo-and-workspace-management-nx-angular-cli-workspaces]] when managing dozens of apps.
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
-
-## Next Steps
-Related advanced topics to explore after mastering Environment Configuration and Environments.ts.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Environment Configuration and Environments.ts in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.

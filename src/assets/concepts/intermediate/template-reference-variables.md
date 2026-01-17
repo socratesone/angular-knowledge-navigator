@@ -7,8 +7,8 @@ difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
 tags: ["intermediate", "template"]
-prerequisites: []
-relatedTopics: []
+prerequisites: ["components-and-templates", "directives-ngif-ngfor-ngswitch"]
+relatedTopics: ["content-projection-and-ng-content", "custom-directives-and-pipes"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/template-reference-variables.md"
 ---
@@ -16,35 +16,49 @@ contentPath: "/assets/concepts/intermediate/template-reference-variables.md"
 # Template Reference Variables
 
 ## Learning Objectives
-Master Template Reference Variables concepts for intermediate Angular development with constitutional patterns.
+- Use template reference variables to access DOM elements and directives.
+- Pass references into methods safely without direct DOM access.
+- Combine `#ref` with `@ViewChild` for component interaction.
+- Avoid overusing template references when data binding suffices.
 
 ## Overview
-Comprehensive coverage of Template Reference Variables including modern Angular approaches, performance considerations, and real-world applications.
+Template reference variables (`#ref`) give you a local handle to elements, components, or directives within a template. They’re helpful for focus management, form access, and integration with directives.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## Core Patterns
+```html
+<input #searchInput type="text" (keyup.enter)="search(searchInput.value)">
+<button (click)="searchInput.focus()">Focus</button>
 
-## Constitutional Alignment
-How Template Reference Variables supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+<app-modal #modal></app-modal>
+<button (click)="modal.open()">Open</button>
+```
 
-## Real-World Applications
-Practical use cases where Template Reference Variables provides significant value in production applications.
+```typescript
+@Component({ /* ... */ })
+export class SearchComponent {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
+  focusInput(): void {
+    this.searchInput?.nativeElement.focus();
+  }
+}
+```
+
+## Best Practices
+- Prefer binding for data flow; use `#ref` for imperative actions.
+- Avoid storing `ElementRef` unless you need direct DOM access.
+- Use `@ViewChild` with `{ static: false }` for elements created after view init.
+
+## Practice & Apply
+- Add a `#ref` to a form and trigger validation on submit.
+- Build a modal component that exposes `open()` via a template reference.
+- Replace a `document.querySelector` with a template reference.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. When is a template reference variable preferable to `@Input`?
+2. Why should you avoid frequent direct DOM access?
+3. How does `@ViewChild` differ from `#ref`?
+4. What risks come with manipulating native elements?
 
 ## Next Steps
-Related advanced topics to explore after mastering Template Reference Variables.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Template Reference Variables in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[content-projection-and-ng-content]], [[custom-directives-and-pipes]], [[angular-material-and-ui-components]]

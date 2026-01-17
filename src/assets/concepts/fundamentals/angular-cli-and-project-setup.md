@@ -133,13 +133,13 @@ After mastering the CLI:
 3. How do you configure different environments in an Angular CLI project?
 4. What constitutional practices are enabled by default in new CLI projects?
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include step-by-step installation instructions for different operating systems
-- Provide troubleshooting guides for common installation issues
-- Show examples of customizing CLI configurations
-- Cover advanced CLI features like schematics and builders
-- Include performance optimization techniques using CLI
-- Discuss CI/CD integration with Angular CLI
-- Cover workspace management for monorepo projects
-- Include examples of custom npm scripts and CLI integration
+## Practice & Apply
+- **Bootstrap Drill**: Run `ng new` with `--standalone --routing --style=scss`, then list the generated files and explain the role of each config.
+- **Generation Drill**: Use `ng generate component` with `--standalone --change-detection=OnPush`, then update the component to accept typed inputs.
+- **Config Drill**: Add a `staging` configuration in `angular.json` and run `ng build --configuration=staging`.
+- **Productivity Drill**: Add a custom npm script that wraps `ng serve --open --port 4300`.
+
+## Knowledge Check
+1. Which CLI command helps you compare bundle sizes across builds?
+2. Why is `--standalone` the preferred default in Angular 17+ workspaces?
+3. What is the difference between `ng generate` and `ng add`?

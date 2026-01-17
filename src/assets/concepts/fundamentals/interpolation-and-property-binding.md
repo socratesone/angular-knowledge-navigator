@@ -157,13 +157,13 @@ After mastering interpolation and property binding:
 3. What are the performance implications of method calls in templates?
 4. How does property binding differ from attribute binding?
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include practical examples for different HTML elements and attributes
-- Show debugging techniques for binding issues
-- Cover performance optimization strategies for binding
-- Provide examples of accessibility considerations with binding
-- Include testing strategies for components with complex binding
-- Show integration with reactive forms and validation
-- Cover advanced scenarios like dynamic component loading
-- Include security considerations and sanitization examples
+## Practice & Apply
+- **Refactor Exercise**: Convert three static attributes in a template into property bindings and explain why each change is safer.
+- **Null Safety Drill**: Add `?.` to a template that currently crashes when data loads late.
+- **Performance Audit**: Replace a template method call with a cached getter or signal and note the change detection impact.
+- **Accessibility Upgrade**: Add `aria-label` and `aria-live` bindings to a status badge component.
+
+## Knowledge Check
+1. When should you use `[attr.*]` binding instead of `[property]` binding?
+2. Why can method calls inside interpolation be expensive?
+3. What is Angular doing when it sanitizes a binding value?

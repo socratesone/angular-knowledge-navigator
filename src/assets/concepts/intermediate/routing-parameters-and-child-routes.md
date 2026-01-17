@@ -7,8 +7,8 @@ difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
 tags: ["intermediate", "routing"]
-prerequisites: []
-relatedTopics: []
+prerequisites: ["routing-and-navigation-basics", "components-and-templates"]
+relatedTopics: ["advanced-routing-guards-resolvers-preloading-strategies", "lazy-loading-feature-modules"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/routing-parameters-and-child-routes.md"
 ---
@@ -16,35 +16,55 @@ contentPath: "/assets/concepts/intermediate/routing-parameters-and-child-routes.
 # Routing Parameters and Child Routes
 
 ## Learning Objectives
-Master Routing Parameters and Child Routes concepts for intermediate Angular development with constitutional patterns.
+- Read and react to route params, query params, and fragments.
+- Build nested route trees with child outlets.
+- Share data between parent and child routes safely.
+- Avoid common routing pitfalls like duplicated navigation or stale params.
 
 ## Overview
-Comprehensive coverage of Routing Parameters and Child Routes including modern Angular approaches, performance considerations, and real-world applications.
+As apps grow, routes become nested and parameterized. Mastering child routes and param handling keeps features modular and makes navigation predictable.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## Reading Route Parameters
+```typescript
+export class ArticleComponent {
+  private route = inject(ActivatedRoute);
 
-## Constitutional Alignment
-How Routing Parameters and Child Routes supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+  readonly articleId$ = this.route.paramMap.pipe(
+    map(params => params.get('id')),
+    filter(Boolean)
+  );
+}
+```
 
-## Real-World Applications
-Practical use cases where Routing Parameters and Child Routes provides significant value in production applications.
+## Child Routes
+```typescript
+export const routes: Routes = [
+  {
+    path: 'topics/:topicId',
+    component: TopicShellComponent,
+    children: [
+      { path: '', loadComponent: () => import('./overview.component').then(c => c.OverviewComponent) },
+      { path: 'examples', loadComponent: () => import('./examples.component').then(c => c.ExamplesComponent) }
+    ]
+  }
+];
+```
+
+## Best Practices
+- Use `route.data` for static metadata like breadcrumbs.
+- Prefer `combineLatest` for syncing params + query params.
+- Use `runGuardsAndResolvers: 'paramsChange'` when necessary.
+
+## Practice & Apply
+- Build a nested route with an overview + details tab.
+- Add query params for filtering and keep them in sync with UI state.
+- Write a test that asserts navigation when param changes.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. What is the difference between `paramMap` and `queryParamMap`?
+2. When do child routes simplify feature boundaries?
+3. How can you keep route parameters reactive without manual subscriptions?
+4. Why might you set `runGuardsAndResolvers` on a route?
 
 ## Next Steps
-Related advanced topics to explore after mastering Routing Parameters and Child Routes.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Routing Parameters and Child Routes in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[advanced-routing-guards-resolvers-preloading-strategies]], [[lazy-loading-feature-modules]], [[routing-and-navigation-basics]]

@@ -180,5 +180,8 @@ export class PermissionDirective implements OnInit {
 ## Next Steps
 [[custom-structural-directives]], [[reusable-component-libraries-and-shared-modules]], [[advanced-dependency-injection-scopes]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive examples of different directive types, advanced DOM manipulation techniques, pipe optimization strategies, testing patterns, accessibility considerations, and real-world use cases. Cover directive lifecycle hooks, host binding patterns, and integration with Angular's reactive ecosystem.
+## Practice & Apply
+- **Directive Build**: Create a `tooltip` or `auto-focus` directive and document its API.
+- **Pipe Optimization**: Convert a heavy pipe to a memoized pure pipe and compare performance.
+- **Host Binding Drill**: Use `@HostBinding` and `@HostListener` to build a reusable interaction.
+- **Testing Lab**: Write a focused unit test for a directive that manipulates the host class.

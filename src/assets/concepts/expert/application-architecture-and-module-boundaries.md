@@ -109,5 +109,7 @@ export class UserManagementStateService {
 ## Next Steps
 [[monorepo-and-workspace-management-nx-angular-cli-workspaces]], [[microfrontend-architecture-and-module-federation]]
 
-## Expansion Guidance for LLMs
-Cover enterprise architecture patterns, domain-driven design principles, microservice integration, team organization strategies, performance considerations, deployment patterns, and governance frameworks for large-scale Angular applications.
+## Practice & Apply
+- **Boundary Map**: Draw a bounded-context map and label which feature owns each model.
+- **API Contract**: Define a shared contract package and show how two features consume it.
+- **Governance Check**: Create a rule set for cross-feature imports and automate it with ESLint.

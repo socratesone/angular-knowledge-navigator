@@ -224,5 +224,8 @@ ngOnDestroy(): void {
 ## Next Steps
 [[reactive-state-management-rxjs-componentstore-ngrx-introduction]], [[optimizing-change-detection-and-performance]], [[custom-directives-and-pipes]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive examples of each lifecycle hook, advanced subscription management patterns, performance optimization techniques, testing strategies, integration with modern Angular features (signals, standalone components), and common troubleshooting scenarios for lifecycle-related issues.
+## Practice & Apply
+- **Lifecycle Timeline**: Add console logs to each lifecycle hook and document the execution order.
+- **Cleanup Audit**: Refactor a component to use `takeUntilDestroyed()` or `DestroyRef` for subscriptions.
+- **OnPush Check**: Verify which hooks run when an `@Input` changes under `OnPush`.
+- **View Query Exercise**: Use `@ViewChild` safely with `ngAfterViewInit` and guard against null references.

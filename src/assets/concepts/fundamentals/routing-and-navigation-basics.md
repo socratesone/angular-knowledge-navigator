@@ -41,7 +41,7 @@ Use `loadChildren` with standalone route files to keep bundles lean. The wildcar
 
 ## Navigation Patterns
 
-- **Declarative:** `<a routerLink="['/concepts', topic.slug]"></a>` keeps the link accessible and automatically toggles `aria-current` when the URL matches.
+- **Declarative:** `<a [routerLink]="['/concepts', topic.slug]"></a>` keeps the link accessible and automatically toggles `aria-current` when the URL matches.
 - **Programmatic:** Inject `Router` and call `navigate` or `navigateByUrl` when navigation depends on imperative logic (e.g., after saving a form).
 - **Stateful Navigation:** pass extras such as `state: { from: 'search' }` to show contextual toasts after redirecting.
 

@@ -6,9 +6,9 @@ skillLevel: "intermediate"
 difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
-tags: ["intermediate", "content"]
-prerequisites: []
-relatedTopics: []
+tags: ["intermediate", "content-projection"]
+prerequisites: ["components-and-templates", "interpolation-and-property-binding"]
+relatedTopics: ["reusable-component-libraries-and-shared-modules", "template-reference-variables"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/content-projection-and-ng-content.md"
 ---
@@ -16,35 +16,62 @@ contentPath: "/assets/concepts/intermediate/content-projection-and-ng-content.md
 # Content Projection and ng-content
 
 ## Learning Objectives
-Master Content Projection and ng-content concepts for intermediate Angular development with constitutional patterns.
+- Use `<ng-content>` to project content into reusable components.
+- Define multiple projection slots with selectors.
+- Combine projection with `@ContentChild` queries safely.
+- Avoid overusing projection when inputs are clearer.
 
 ## Overview
-Comprehensive coverage of Content Projection and ng-content including modern Angular approaches, performance considerations, and real-world applications.
+Content projection lets a component accept and render arbitrary markup provided by its parent. It’s essential for building reusable layout components and design-system primitives.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## Basic Projection
+```typescript
+@Component({
+  selector: 'app-card',
+  standalone: true,
+  template: `
+    <section class="card">
+      <ng-content></ng-content>
+    </section>
+  `
+})
+export class CardComponent {}
+```
 
-## Constitutional Alignment
-How Content Projection and ng-content supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+## Multiple Slots
+```html
+<app-panel>
+  <h2 slot="title">State Management</h2>
+  <p>Signals, RxJS, and NgRx patterns.</p>
+</app-panel>
+```
 
-## Real-World Applications
-Practical use cases where Content Projection and ng-content provides significant value in production applications.
+```typescript
+@Component({
+  selector: 'app-panel',
+  standalone: true,
+  template: `
+    <header><ng-content select="[slot=title]"></ng-content></header>
+    <main><ng-content></ng-content></main>
+  `
+})
+export class PanelComponent {}
+```
+
+## Content Queries
+- `@ContentChild` accesses projected content once it exists.
+- Use `ngAfterContentInit` to safely interact with projected elements.
+
+## Practice & Apply
+- Build a `Card` component with header/body/footer slots.
+- Add `@ContentChild` to detect whether a header is present.
+- Replace a complex `*ngIf` block with projection to simplify layout logic.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. When should you use projection instead of inputs?
+2. Why must you wait for `ngAfterContentInit`?
+3. How do multiple projection slots work?
+4. What are the risks of deeply nested projected content?
 
 ## Next Steps
-Related advanced topics to explore after mastering Content Projection and ng-content.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Content Projection and ng-content in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[reusable-component-libraries-and-shared-modules]], [[custom-directives-and-pipes]], [[template-reference-variables]]

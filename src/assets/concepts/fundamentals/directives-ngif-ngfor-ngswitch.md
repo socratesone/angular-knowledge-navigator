@@ -237,13 +237,13 @@ After mastering structural directives:
 3. What are the advantages of the new Angular 17+ control flow syntax?
 4. How do structural directives interact with change detection?
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include performance benchmarks comparing trackBy vs no trackBy
-- Show debugging techniques for structural directive issues
-- Cover accessibility considerations for dynamic content
-- Provide migration guides from legacy to modern control flow syntax
-- Include complex real-world examples with nested data structures
-- Show integration with reactive forms and validation
-- Cover testing strategies for components with complex directive logic
-- Include best practices for large list handling and virtualization
+## Practice & Apply
+- **TrackBy Challenge**: Add a `trackBy` function to an `ngFor` list and measure DOM updates with Angular DevTools.
+- **Control Flow Refactor**: Replace a legacy `*ngIf`/`*ngFor` combo with Angular 17+ `@if` and `@for`.
+- **Empty State Design**: Build an `ngSwitch` that shows loading, empty, and error states.
+- **Accessibility Pass**: Verify that dynamic content updates include appropriate `aria-live` or status messaging.
+
+## Knowledge Check
+1. When does `@for` outperform `*ngFor` in real apps?
+2. Why should templates avoid deeply nested structural directives?
+3. What is the benefit of keeping conditional logic out of templates?
