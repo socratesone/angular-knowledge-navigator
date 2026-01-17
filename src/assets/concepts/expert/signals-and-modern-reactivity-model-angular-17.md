@@ -358,5 +358,8 @@ describe('SignalDemoComponent', () => {
 ## Next Steps
 [[defining-and-enforcing-architectural-conventions-constitutional-compliance]], [[performance-profiling-and-optimization-change-detection-profiling-bundle-size-reduction]], [[application-architecture-and-module-boundaries]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive signal patterns, performance benchmarks compared to traditional change detection, advanced effect patterns, integration with existing Angular features, migration strategies, testing approaches, and real-world case studies showing signal adoption in large applications.
+## Practice & Apply
+- **Signal Refactor**: Replace a local `BehaviorSubject` with a signal and computed derived state.
+- **Effect Guardrail**: Add an effect that syncs to `localStorage`, then prevent infinite loops.
+- **Interop Drill**: Bridge an observable into a signal using `toSignal` and document the tradeoffs.
+- **Performance Note**: Measure change detection cycles before/after introducing signals in a view-heavy component.

@@ -112,12 +112,13 @@ After understanding architecture:
 3. What are the benefits of feature modules?
 4. How does Angular's component tree structure affect application organization?
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include visual diagrams of Angular architecture
-- Provide side-by-side comparisons of NgModule vs standalone approaches
-- Show real project structure examples
-- Explain module bundling and lazy loading implications
-- Cover testing strategies for different architectural patterns
-- Discuss migration paths from NgModules to standalone components
-- Include performance considerations for different architectural choices
+## Practice & Apply
+- **Architecture Sketch**: Draw a feature area and list which parts become components, services, and routes.
+- **Standalone Migration**: Convert one NgModule-based component into a standalone component.
+- **Lazy Loading Plan**: Identify a route that can be lazy loaded and explain why.
+- **Template Audit**: Find three template concerns that should move into a component class.
+
+## Knowledge Check
+1. Why do Angular applications typically use feature-based folder structures?
+2. How do standalone components simplify dependency management?
+3. What causes a route to be bundled lazily?

@@ -234,5 +234,8 @@ describe('UserDashboardComponent', () => {
 ## Next Steps
 [[reusable-component-libraries-and-shared-modules]], [[application-architecture-and-module-boundaries]], [[custom-build-configuration-and-webpack-adjustments]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive migration guides, performance benchmarks, real-world case studies, integration with popular Angular libraries, team adoption strategies, and future roadmap considerations for Angular's architectural evolution. Cover advanced scenarios like micro-frontends, component libraries, and enterprise application patterns.
+## Practice & Apply
+- **Hybrid Migration**: Convert one feature module to standalone routes and document the dependency changes.
+- **Library Audit**: Identify third-party modules and decide whether to wrap them with standalone provider functions.
+- **Performance Check**: Compare bundle sizes before and after removing an NgModule.
+- **Team Guide**: Draft a short migration checklist for your team.

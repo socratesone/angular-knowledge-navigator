@@ -203,8 +203,19 @@ get displayValue(): string {
 // ❌ Don't do this
 document.getElementById('myElement').innerHTML = 'New content';
 
-// ✅ Use Angular binding instead
-template: `<div [innerHTML]="dynamicContent"></div>`
+// ✅ Use Angular binding instead (sanitize or trust only safe HTML)
+template: `<div [innerHTML]="sanitizedContent"></div>`
+```
+
+```typescript
+// Component example with DomSanitizer for trusted HTML
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
+constructor(private sanitizer: DomSanitizer) {}
+
+get sanitizedContent(): SafeHtml {
+  return this.sanitizer.bypassSecurityTrustHtml(this.dynamicContent);
+}
 ```
 
 ⚠️ **Be Careful with Object References**

@@ -107,5 +107,8 @@ Reactive forms are essential for:
 ## Next Steps
 [[dynamic-form-generation-and-configuration-driven-uis]], [[custom-directives-and-pipes]], [[advanced-dependency-injection-scopes]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive examples of form validation, dynamic form generation, custom validators, async validation patterns, testing strategies, accessibility considerations, and integration with state management systems. Cover performance optimization techniques and migration strategies from template-driven forms.
+## Practice & Apply
+- **Validation Lab**: Add sync + async validators (e.g., unique email) and surface `pending` UI states.
+- **Dynamic Form Drill**: Generate a `FormGroup` from a JSON schema and render it with `@for`.
+- **State Sync**: Connect form value changes to a signal or store and debounce updates.
+- **Accessibility Pass**: Ensure each control has a matching label, error message, and `aria-describedby`.

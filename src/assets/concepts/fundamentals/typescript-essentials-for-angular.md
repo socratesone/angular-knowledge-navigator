@@ -192,13 +192,13 @@ export class UserService {
 }
 ```
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include practical examples showing JavaScript vs TypeScript comparisons
-- Provide debugging techniques specific to TypeScript in Angular
-- Cover migration strategies from JavaScript to TypeScript
-- Include performance implications of different TypeScript patterns
-- Show integration with popular Angular libraries and their types
-- Cover testing strategies for TypeScript Angular code
-- Include advanced generic patterns for complex Angular applications
-- Discuss TypeScript compiler options and their impact on Angular builds
+## Practice & Apply
+- **Type Hardening**: Replace three `any` types in a component with explicit interfaces or generics.
+- **Template Safety**: Turn on `strictTemplates` and fix the resulting errors in one component.
+- **Refactor Drill**: Convert a mutable array update into an immutable pattern with `readonly` and spread.
+- **Utility Types**: Use `Pick` or `Omit` to create a DTO type for a form.
+
+## Knowledge Check
+1. When should you prefer `unknown` over `any`?
+2. How does `strictNullChecks` change template authoring?
+3. Why are readonly and immutability helpful with `OnPush`?

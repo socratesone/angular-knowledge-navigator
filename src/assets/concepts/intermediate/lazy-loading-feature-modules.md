@@ -6,9 +6,9 @@ skillLevel: "intermediate"
 difficulty: 3
 estimatedReadingTime: 25
 constitutional: true
-tags: ["intermediate", "lazy"]
-prerequisites: []
-relatedTopics: []
+tags: ["intermediate", "lazy-loading"]
+prerequisites: ["routing-and-navigation-basics", "angular-architecture-overview-modules-components-templates"]
+relatedTopics: ["advanced-routing-guards-resolvers-preloading-strategies", "performance-profiling-and-optimization-change-detection-profiling-bundle-size-reduction"]
 lastUpdated: "2025-11-11"
 contentPath: "/assets/concepts/intermediate/lazy-loading-feature-modules.md"
 ---
@@ -16,35 +16,46 @@ contentPath: "/assets/concepts/intermediate/lazy-loading-feature-modules.md"
 # Lazy Loading Feature Modules
 
 ## Learning Objectives
-Master Lazy Loading Feature Modules concepts for intermediate Angular development with constitutional patterns.
+- Configure lazy-loaded routes with standalone components or feature modules.
+- Understand how lazy loading affects bundle sizes and navigation timing.
+- Apply preloading strategies for improved UX.
+- Avoid common lazy-loading pitfalls (circular deps, route duplication).
 
 ## Overview
-Comprehensive coverage of Lazy Loading Feature Modules including modern Angular approaches, performance considerations, and real-world applications.
+Lazy loading splits your application into smaller chunks that are loaded on demand. It improves initial load time and keeps critical paths fast.
 
-## Key Concepts
-- Fundamental patterns and implementation strategies
-- Constitutional alignment with modern Angular practices
-- Performance optimization techniques
-- Testing and debugging approaches
+## Route Configuration
+```typescript
+export const appRoutes: Routes = [
+  {
+    path: 'reports',
+    loadChildren: () =>
+      import('./features/reports/reports.routes').then(m => m.REPORTS_ROUTES)
+  },
+  { path: '', redirectTo: 'home', pathMatch: 'full' }
+];
+```
 
-## Constitutional Alignment
-How Lazy Loading Feature Modules supports Angular's constitutional practices:
-- Standalone components and modern architecture
-- OnPush change detection compatibility
-- Type safety and immutable patterns
-- Performance-first implementation
+## Preloading Strategies
+- **No Preloading**: default behavior, smallest initial bundle.
+- **PreloadAllModules**: loads all lazy routes after initial load.
+- **Custom Strategy**: preload based on network state or feature flags.
 
-## Real-World Applications
-Practical use cases where Lazy Loading Feature Modules provides significant value in production applications.
+## Performance Tips
+- Keep shared code in a `shared/` or `core/` area to avoid duplication.
+- Use `Route.data` to annotate whether a route should be preloaded.
+- Avoid creating large barrels that pull in eager dependencies.
+
+## Practice & Apply
+- Split a feature into a lazy route and compare bundle sizes.
+- Add a custom preloading strategy that only preloads on Wi-Fi.
+- Validate a route guard still runs after lazy loading.
 
 ## Assessment Questions
-1. Key concept validation questions
-2. Implementation strategy questions  
-3. Performance and best practice questions
-4. Integration and architecture questions
+1. Why does lazy loading improve startup performance?
+2. How does preloading differ from eager loading?
+3. What causes duplicated code in lazy chunks?
+4. When is `loadComponent` preferable to `loadChildren`?
 
 ## Next Steps
-Related advanced topics to explore after mastering Lazy Loading Feature Modules.
-
-## Expansion Guidance for LLMs
-This comprehensive stub provides the foundation for detailed content expansion covering all aspects of Lazy Loading Feature Modules in modern Angular development, including constitutional practices, performance optimization, testing strategies, and real-world implementation patterns.
+[[routing-parameters-and-child-routes]], [[advanced-routing-guards-resolvers-preloading-strategies]], [[performance-profiling-and-optimization-change-detection-profiling-bundle-size-reduction]]

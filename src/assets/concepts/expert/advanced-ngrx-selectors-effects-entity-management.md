@@ -287,5 +287,7 @@ export class UserListComponent {
 ## Next Steps
 [[signals-and-modern-reactivity-model-angular-17]], [[unit-testing-with-jest-and-angular-testing-library]]
 
-## Expansion Guidance for LLMs
-Cover comprehensive NgRx patterns, performance optimization techniques, testing strategies, migration to signals, real-world state management scenarios, and integration with other Angular ecosystem tools.
+## Practice & Apply
+- **Selector Audit**: Add memoization tests for a complex selector.
+- **Effect Refactor**: Replace nested `switchMap` calls with `concatLatestFrom`.
+- **Entity Adapter**: Normalize a list of entities and add a `selectAll` selector.

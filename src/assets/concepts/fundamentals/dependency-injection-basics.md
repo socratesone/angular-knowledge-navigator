@@ -131,5 +131,7 @@ After understanding DI basics:
 3. When would you use the inject() function vs constructor injection?
 4. How does DI improve testability?
 
-## Expansion Guidance for LLMs
-Cover comprehensive DI patterns, testing strategies, performance implications, hierarchical injectors, custom tokens, and migration from constructor to inject() function patterns.
+## Practice & Apply
+- Replace one constructor injection with the `inject()` function and explain the change.
+- Create a token for API base URL and override it in a test.
+- Add a component-level provider and observe the new service instance lifecycle.

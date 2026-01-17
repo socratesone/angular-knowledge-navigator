@@ -54,7 +54,7 @@ export const provideUiPrimitives = () => UI_PRIMITIVES;
 ```
 
 ## Governance & Versioning
-- Document component contracts in `/specs/002-content-display-improvements/plan.md`.
+- Document component contracts in README files or a shared docs site so consumers can verify inputs, outputs, and accessibility guarantees.
 - Use semantic release or Nx affected pipelines for automated publishing.
 - Provide changelog + migration notes (schematics or codemods) for breaking changes.
 

@@ -120,5 +120,8 @@ After mastering pipes:
 3. When would you create a custom pipe vs using a method?
 4. How do pipes affect change detection performance?
 
-## Expansion Guidance for LLMs
-Include comprehensive examples of all built-in pipes, custom pipe patterns, internationalization usage, testing strategies, and performance optimization techniques.
+## Practice & Apply
+- **Formatting Drill**: Format the same date using `short`, `medium`, and a custom format string.
+- **Pipe Chain**: Combine `slice` and `titlecase` for a preview snippet.
+- **Custom Pipe**: Build a `maskEmail` pipe for privacy.
+- **Async Pipe**: Replace a manual subscription with `async` and remove cleanup code.

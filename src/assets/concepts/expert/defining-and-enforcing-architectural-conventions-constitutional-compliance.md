@@ -412,5 +412,8 @@ export class ComplianceDashboardComponent {
 ## Next Steps
 [[code-quality-automation-and-linting-enforcement]], [[monorepo-and-workspace-management-nx-angular-cli-workspaces]], [[microfrontend-architecture-and-module-federation]]
 
-## Expansion Guidance for LLMs
-When expanding this content, include comprehensive governance frameworks, automated tooling setup, team adoption strategies, metrics and monitoring systems, migration planning, conflict resolution strategies, and long-term maintenance approaches for constitutional compliance in enterprise Angular applications.
+## Practice & Apply
+- **Policy Draft**: Define 5 architectural rules (e.g., "feature state via signals only") and explain the rationale.
+- **Automation Plan**: Map each rule to an ESLint rule, schematic, or CI check.
+- **Adoption Roadmap**: Break compliance work into quarterly milestones and define success metrics.
+- **Exception Process**: Document how teams request and approve deviations.

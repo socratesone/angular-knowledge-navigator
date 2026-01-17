@@ -213,13 +213,13 @@ After mastering event binding:
 3. How do you implement custom two-way binding in Angular components?
 4. What are the performance considerations for event handlers in Angular?
 
-## Expansion Guidance for LLMs
-When expanding this content:
-- Include comprehensive examples of different event types (mouse, keyboard, touch, custom)
-- Show debugging techniques for event binding issues
-- Cover accessibility considerations for event handling
-- Provide performance optimization strategies for event-heavy applications
-- Include integration examples with popular UI libraries
-- Show testing strategies for event-driven components
-- Cover mobile and touch-specific event handling
-- Include security considerations for user input handling
+## Practice & Apply
+- **Event Map**: Build a small component that handles `click`, `keyup.enter`, and `focus` and log typed events.
+- **Custom Two-Way Binding**: Add a `value`/`valueChange` pair to a reusable input and use `[(value)]` from a parent component.
+- **RxJS Upgrade**: Convert a raw `(input)` handler into an RxJS stream with `debounceTime`.
+- **Accessibility Pass**: Ensure key actions work with keyboard events and have visible focus states.
+
+## Knowledge Check
+1. What does `$event` represent and when should you type it?
+2. How does `[(ngModel)]` expand into property + event bindings?
+3. When is `ControlValueAccessor` a better fit than custom two-way binding?
